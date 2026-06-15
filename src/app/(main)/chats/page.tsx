@@ -5,12 +5,12 @@ import { AppHeader } from '@/components/zynqo/AppHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { MessageSquare, Search, X, UserPlus, Loader2 } from 'lucide-react';
+import { MessageSquare, Search, X, UserPlus, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   Dialog, 
@@ -28,29 +28,31 @@ export default function ChatsPage() {
   const db = useFirestore();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   // Load real chats from Firestore
-  const chatsQuery = useMemo(() => {
+  const chatsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
       collection(db, 'chats'),
       where('participantIds', 'array-contains', user.uid),
       orderBy('updatedAt', 'desc')
     );
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: chats = [], loading: chatsLoading } = useCollection(chatsQuery);
 
-  // Load all users to start new chats (Simplified for MVP)
-  const usersQuery = useMemo(() => {
+  // Load all users to search (MVP: Client-side filtering)
+  const usersQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(collection(db, 'users'), orderBy('displayName', 'asc'));
   }, [db]);
 
   const { data: allUsers = [] } = useCollection(usersQuery);
 
+  // Filter conversations for the main list
   const filteredChats = chats.filter((chat: any) => {
     const partnerName = chat.participantNames?.find((n: string) => n !== user?.displayName) || '';
     const lastMsgText = chat.lastMessage?.text || '';
@@ -58,11 +60,22 @@ export default function ChatsPage() {
            lastMsgText.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  // Filter users for the "New Chat" dialog
+  const filteredUsers = allUsers.filter((u: any) => {
+    if (u.uid === user?.uid) return false;
+    const search = userSearchQuery.toLowerCase();
+    return u.username?.toLowerCase().includes(search) || 
+           u.displayName?.toLowerCase().includes(search);
+  });
+
   const startNewChat = async (targetUser: any) => {
     if (!user || !db) return;
 
-    // Check if chat already exists
-    const existingChat = chats.find((c: any) => c.participantIds.includes(targetUser.uid));
+    // Check if chat already exists (1:1 chat)
+    const existingChat = chats.find((c: any) => 
+      c.participantIds?.length === 2 && c.participantIds.includes(targetUser.uid)
+    );
+
     if (existingChat) {
       router.push(`/chats/${existingChat.id}`);
       setIsNewChatOpen(false);
@@ -71,8 +84,9 @@ export default function ChatsPage() {
 
     const newChatData = {
       participantIds: [user.uid, targetUser.uid],
-      participantNames: [user.displayName, targetUser.displayName],
+      participantNames: [user.displayName || 'User', targetUser.displayName || 'User'],
       updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
       lastMessage: {
         text: 'Started a new conversation',
         senderId: user.uid,
@@ -194,7 +208,10 @@ export default function ChatsPage() {
 
       {/* Floating Action Button with New Chat Dialog */}
       {!isSearching && (
-        <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
+        <Dialog open={isNewChatOpen} onOpenChange={(open) => {
+          setIsNewChatOpen(open);
+          if (!open) setUserSearchQuery('');
+        }}>
           <DialogTrigger asChild>
             <Button 
               className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-30 transition-transform active:scale-90"
@@ -203,31 +220,63 @@ export default function ChatsPage() {
               <UserPlus size={24} />
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-white/10 text-foreground rounded-[2rem] max-w-[90vw] sm:max-w-[400px]">
-            <DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-foreground rounded-[2rem] max-w-[90vw] sm:max-w-[400px] p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-0">
               <DialogTitle className="font-headline text-xl font-bold">New Conversation</DialogTitle>
             </DialogHeader>
-            <div className="space-y-2 py-4 max-h-[60vh] overflow-y-auto no-scrollbar">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Available Users</p>
-              {allUsers.filter((u: any) => u.uid !== user?.uid).map((u: any) => (
-                <button 
-                  key={u.uid}
-                  onClick={() => startNewChat(u)}
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 transition-colors text-left"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={u.profilePhoto} />
-                    <AvatarFallback>{u.displayName?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-bold text-sm">{u.displayName}</h4>
-                    <p className="text-[10px] text-primary font-medium tracking-widest uppercase">@{u.username}</p>
+            
+            <div className="px-6 py-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <Input 
+                  placeholder="Search by username..." 
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className="h-10 pl-10 bg-white/5 border-white/5 rounded-xl text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="max-h-[50vh] overflow-y-auto no-scrollbar px-2 pb-6">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-4 mb-2 opacity-50">
+                {userSearchQuery ? 'Search Results' : 'Suggested Users'}
+              </p>
+              
+              <div className="space-y-1">
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((u: any) => (
+                    <button 
+                      key={u.uid}
+                      onClick={() => startNewChat(u)}
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 transition-colors text-left px-4 group"
+                    >
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 border border-white/5">
+                          <AvatarImage src={u.profilePhoto} />
+                          <AvatarFallback className="bg-primary/10 text-primary">{u.displayName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-sm group-hover:text-primary transition-colors">{u.displayName}</h4>
+                        <p className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase">@{u.username}</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-primary/0 group-hover:bg-primary/10 flex items-center justify-center text-primary transition-all">
+                        <Sparkles size={14} className="opacity-0 group-hover:opacity-100" />
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 px-8 text-center">
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                      <Search size={20} className="text-muted-foreground opacity-20" />
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {userSearchQuery ? `No users found matching "${userSearchQuery}"` : 'Try searching for a friend'}
+                    </p>
                   </div>
-                </button>
-              ))}
-              {allUsers.length <= 1 && (
-                <p className="text-center text-xs text-muted-foreground py-8">No other users found yet.</p>
-              )}
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
