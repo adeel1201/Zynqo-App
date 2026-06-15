@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Send, Plus, Mic, Sparkles, MoreVertical, Phone, Video, Loader2 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { aiConversationAssistant } from '@/ai/flows/ai-conversation-assistant-flow';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -41,8 +41,7 @@ export default function ChatDetailPage() {
   const chatRef = useMemoFirebase(() => id ? doc(db, 'chats', id as string) : null, [db, id]);
   const { data: chat, loading: chatLoading } = useDoc(chatRef);
 
-  // Load messages in real-time from Firestore. 
-  // onSnapshot handles the "automatic refresh" when new messages are added.
+  // Load messages
   const messagesQuery = useMemoFirebase(() => {
     if (!db || !id) return null;
     return query(
@@ -53,18 +52,21 @@ export default function ChatDetailPage() {
 
   const { data: messages = [], loading: messagesLoading } = useCollection(messagesQuery);
 
+  // Presence lookup for partner
+  const partnerId = useMemo(() => chat?.participantIds?.find((uid: string) => uid !== user?.uid), [chat, user?.uid]);
+  const partnerRef = useMemoFirebase(() => partnerId ? doc(db, 'users', partnerId) : null, [db, partnerId]);
+  const { data: partnerProfile } = useDoc(partnerRef);
+
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
-  // Auto-scroll when messages arrive
   useEffect(() => {
     if (messages.length > 0) {
       scrollToBottom();
     }
   }, [messages.length]);
 
-  // Mark incoming messages as read automatically
   useEffect(() => {
     if (messages.length > 0 && user && id && db) {
       const unreadIncoming = messages.filter(
@@ -73,14 +75,7 @@ export default function ChatDetailPage() {
 
       unreadIncoming.forEach((msg) => {
         const msgRef = doc(db, 'chats', id as string, 'messages', msg.id);
-        updateDoc(msgRef, { status: 'read' }).catch(async (err) => {
-          const permissionError = new FirestorePermissionError({
-            path: msgRef.path,
-            operation: 'update',
-            requestResourceData: { status: 'read' },
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+        updateDoc(msgRef, { status: 'read' }).catch(() => {});
       });
     }
   }, [messages, user, id, db]);
@@ -99,19 +94,15 @@ export default function ChatDetailPage() {
     const messagesRef = collection(db, 'chats', id as string, 'messages');
     const currentChatRef = doc(db, 'chats', id as string);
     
-    // Optimistically initiate the write.
-    // This will trigger the local onSnapshot listener immediately.
-    addDoc(messagesRef, messageData)
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: messagesRef.path,
-          operation: 'create',
-          requestResourceData: messageData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    addDoc(messagesRef, messageData).catch(async (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: messagesRef.path,
+        operation: 'create',
+        requestResourceData: messageData,
       });
+      errorEmitter.emit('permission-error', permissionError);
+    });
 
-    // Update parent chat document for the list view
     updateDoc(currentChatRef, {
       lastMessage: {
         text: textToSend,
@@ -119,14 +110,7 @@ export default function ChatDetailPage() {
         timestamp: serverTimestamp()
       },
       updatedAt: serverTimestamp()
-    }).catch(async (error) => {
-      const permissionError = new FirestorePermissionError({
-        path: currentChatRef.path,
-        operation: 'update',
-        requestResourceData: { lastMessage: textToSend },
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
+    }).catch(() => {});
     
     setInputText('');
     setAiSuggestions([]);
@@ -154,6 +138,12 @@ export default function ChatDetailPage() {
     }
   };
 
+  const formatLastSeen = (timestamp: any) => {
+    if (!timestamp) return 'Offline';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return `Last seen ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
   if (chatLoading || messagesLoading) return (
     <div className="flex flex-col items-center justify-center h-screen bg-[#0E0C12] text-primary">
       <Loader2 className="animate-spin mb-4" size={32} />
@@ -170,7 +160,8 @@ export default function ChatDetailPage() {
     </div>
   );
 
-  const partnerName = chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Chat Partner';
+  const partnerName = partnerProfile?.displayName || chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Chat Partner';
+  const isOnline = partnerProfile?.onlineStatus === 'online';
 
   return (
     <div className="flex flex-col h-screen bg-[#0E0C12] animate-fade-in relative">
@@ -182,15 +173,17 @@ export default function ChatDetailPage() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <Avatar className="h-10 w-10 border border-primary/20 shadow-lg">
-                <AvatarImage src={`https://picsum.photos/seed/${id}/100/100`} />
+                <AvatarImage src={partnerProfile?.profilePhoto || `https://picsum.photos/seed/${id}/100/100`} />
                 <AvatarFallback>{partnerName[0]}</AvatarFallback>
               </Avatar>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+              {isOnline && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+              )}
             </div>
             <div>
               <h3 className="font-bold text-sm leading-none text-foreground">{partnerName}</h3>
-              <span className="text-[10px] text-primary uppercase font-bold tracking-widest mt-1 block">
-                Active Now
+              <span className={`text-[9px] uppercase font-bold tracking-widest mt-1 block ${isOnline ? 'text-primary' : 'text-muted-foreground'}`}>
+                {isOnline ? 'Active Now' : formatLastSeen(partnerProfile?.lastSeen)}
               </span>
             </div>
           </div>

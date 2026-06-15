@@ -44,13 +44,22 @@ export default function ChatsPage() {
 
   const { data: chats = [], loading: chatsLoading } = useCollection(chatsQuery);
 
-  // Load all users to search for starting a new chat
+  // Load all users to get their presence status
   const usersQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(collection(db, 'users'), orderBy('displayName', 'asc'));
   }, [db]);
 
   const { data: allUsers = [] } = useCollection(usersQuery);
+
+  // Create a user map for easy status lookup
+  const userStatusMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    allUsers.forEach((u: any) => {
+      map[u.uid] = u;
+    });
+    return map;
+  }, [allUsers]);
 
   // Filter conversations for the main list based on search input
   const filteredChats = useMemo(() => {
@@ -175,10 +184,13 @@ export default function ChatsPage() {
           </div>
         ) : filteredChats.length > 0 ? (
           filteredChats.map((chat: any) => {
-            const partnerName = chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Partner';
+            const partnerId = chat.participantIds?.find((id: string) => id !== user?.uid);
+            const partnerProfile = partnerId ? userStatusMap[partnerId] : null;
+            const partnerName = partnerProfile?.displayName || chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Partner';
             const lastMsg = chat.lastMessage?.text || 'No messages yet';
             const timestamp = formatTimestamp(chat.updatedAt);
             const isUnread = chat.lastMessage?.senderId !== user?.uid && chat.lastMessage?.status !== 'read';
+            const isOnline = partnerProfile?.onlineStatus === 'online';
 
             return (
               <Link 
@@ -188,10 +200,13 @@ export default function ChatsPage() {
               >
                 <div className="relative">
                   <Avatar className="w-14 h-14 border border-white/5 shadow-xl">
-                    <AvatarImage src={`https://picsum.photos/seed/${chat.id}/100/100`} />
+                    <AvatarImage src={partnerProfile?.profilePhoto || `https://picsum.photos/seed/${chat.id}/100/100`} />
                     <AvatarFallback>{partnerName[0]}</AvatarFallback>
                   </Avatar>
-                  {isUnread && (
+                  {isOnline && (
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0E0C12]" />
+                  )}
+                  {isUnread && !isOnline && (
                     <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-primary rounded-full border-2 border-[#0E0C12] animate-pulse" />
                   )}
                 </div>
@@ -289,7 +304,7 @@ export default function ChatsPage() {
                           <AvatarImage src={u.profilePhoto} />
                           <AvatarFallback className="bg-primary/10 text-primary">{u.displayName?.[0]}</AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-card rounded-full ${u.onlineStatus === 'online' ? 'bg-green-500' : 'bg-muted'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm group-hover:text-primary transition-colors truncate">{u.displayName}</h4>

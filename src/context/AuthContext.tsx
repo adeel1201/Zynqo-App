@@ -4,8 +4,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +27,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Presence logic
+  useEffect(() => {
+    if (!user) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    
+    // Set status to online when user is authenticated
+    updateDoc(userRef, {
+      onlineStatus: 'online',
+      lastSeen: serverTimestamp()
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: { onlineStatus: 'online' },
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+
+    // Handle visibility changes (e.g., user minimizes tab)
+    const handleVisibilityChange = () => {
+      const status = document.visibilityState === 'visible' ? 'online' : 'away';
+      updateDoc(userRef, { 
+        onlineStatus: status,
+        lastSeen: serverTimestamp()
+      }).catch(() => {});
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Attempt to set offline when the component unmounts (app close)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      updateDoc(userRef, {
+        onlineStatus: 'offline',
+        lastSeen: serverTimestamp()
+      }).catch(() => {});
+    };
+  }, [user]);
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | undefined;
