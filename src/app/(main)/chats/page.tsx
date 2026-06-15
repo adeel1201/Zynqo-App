@@ -5,7 +5,7 @@ import { AppHeader } from '@/components/zynqo/AppHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { MessageSquare, Search, X, UserPlus, Loader2, Sparkles } from 'lucide-react';
+import { MessageSquare, Search, X, UserPlus, Loader2, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
@@ -64,9 +64,12 @@ export default function ChatsPage() {
   // Filter conversations for the main list based on search input
   const filteredChats = useMemo(() => {
     return chats.filter((chat: any) => {
-      const partnerName = chat.participantNames?.find((n: string) => n !== user?.displayName) || '';
+      const partnerName = chat.type === 'group' 
+        ? chat.groupName 
+        : chat.participantNames?.find((n: string) => n !== user?.displayName) || '';
+      
       const lastMsgText = chat.lastMessage?.text || '';
-      return partnerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      return partnerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
              lastMsgText.toLowerCase().includes(searchQuery.toLowerCase());
     });
   }, [chats, searchQuery, user?.displayName]);
@@ -86,7 +89,7 @@ export default function ChatsPage() {
 
     // Check if a 1:1 chat already exists with this user
     const existingChat = chats.find((c: any) => 
-      c.participantIds?.length === 2 && c.participantIds.includes(targetUser.uid)
+      c.type !== 'group' && c.participantIds?.length === 2 && c.participantIds.includes(targetUser.uid)
     );
 
     if (existingChat) {
@@ -184,13 +187,22 @@ export default function ChatsPage() {
           </div>
         ) : filteredChats.length > 0 ? (
           filteredChats.map((chat: any) => {
-            const partnerId = chat.participantIds?.find((id: string) => id !== user?.uid);
+            const isGroup = chat.type === 'group';
+            const partnerId = !isGroup ? chat.participantIds?.find((id: string) => id !== user?.uid) : null;
             const partnerProfile = partnerId ? userStatusMap[partnerId] : null;
-            const partnerName = partnerProfile?.displayName || chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Partner';
+            
+            const chatName = isGroup 
+              ? chat.groupName 
+              : partnerProfile?.displayName || chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Partner';
+            
+            const chatPhoto = isGroup 
+              ? chat.groupPhoto 
+              : partnerProfile?.profilePhoto || `https://picsum.photos/seed/${chat.id}/100/100`;
+
             const lastMsg = chat.lastMessage?.text || 'No messages yet';
             const timestamp = formatTimestamp(chat.updatedAt);
             const isUnread = chat.lastMessage?.senderId !== user?.uid && chat.lastMessage?.status !== 'read';
-            const isOnline = partnerProfile?.onlineStatus === 'online';
+            const isOnline = !isGroup && partnerProfile?.onlineStatus === 'online';
 
             return (
               <Link 
@@ -200,13 +212,15 @@ export default function ChatsPage() {
               >
                 <div className="relative">
                   <Avatar className="w-14 h-14 border border-white/5 shadow-xl">
-                    <AvatarImage src={partnerProfile?.profilePhoto || `https://picsum.photos/seed/${chat.id}/100/100`} />
-                    <AvatarFallback>{partnerName[0]}</AvatarFallback>
+                    <AvatarImage src={chatPhoto} />
+                    <AvatarFallback className={isGroup ? "bg-primary/20 text-primary" : ""}>
+                      {isGroup ? <Users size={24} /> : chatName[0]}
+                    </AvatarFallback>
                   </Avatar>
                   {isOnline && (
                     <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0E0C12]" />
                   )}
-                  {isUnread && !isOnline && (
+                  {isUnread && (
                     <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-primary rounded-full border-2 border-[#0E0C12] animate-pulse" />
                   )}
                 </div>
@@ -214,7 +228,8 @@ export default function ChatsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <h3 className={`font-bold text-sm truncate flex items-center gap-1 ${isUnread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {partnerName}
+                      {isGroup && <Users size={12} className="text-primary shrink-0" />}
+                      {chatName}
                     </h3>
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest shrink-0">
                       {timestamp}
@@ -241,21 +256,30 @@ export default function ChatsPage() {
               <MessageSquare size={32} className="text-muted-foreground opacity-20" />
             </div>
             <h4 className="font-bold text-lg mb-1">{searchQuery ? 'No results found' : 'No conversations yet'}</h4>
-            <p className="text-xs text-muted-foreground">Start a new chat with your friends to see them here.</p>
+            <p className="text-xs text-muted-foreground">Start a new chat with your friends or create a group.</p>
             {!searchQuery && (
-              <Button 
-                onClick={() => setIsNewChatOpen(true)}
-                variant="outline" 
-                className="mt-6 rounded-2xl border-primary/20 text-primary hover:bg-primary/5"
-              >
-                Start Chatting
-              </Button>
+              <div className="flex gap-2 mt-6">
+                <Button 
+                  onClick={() => setIsNewChatOpen(true)}
+                  variant="outline" 
+                  className="rounded-2xl border-primary/20 text-primary hover:bg-primary/5"
+                >
+                  Start Chatting
+                </Button>
+                <Button 
+                  onClick={() => router.push('/chats/create-group')}
+                  variant="ghost" 
+                  className="rounded-2xl text-muted-foreground hover:text-foreground"
+                >
+                  New Group
+                </Button>
+              </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Floating Action Button with New Chat Dialog */}
+      {/* Floating Action Button with New Chat Options */}
       {!isSearching && (
         <Dialog open={isNewChatOpen} onOpenChange={(open) => {
           setIsNewChatOpen(open);
@@ -271,7 +295,18 @@ export default function ChatsPage() {
           </DialogTrigger>
           <DialogContent className="bg-card border-white/10 text-foreground rounded-[2rem] max-w-[90vw] sm:max-w-[400px] p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-0">
-              <DialogTitle className="font-headline text-xl font-bold text-center sm:text-left">New Conversation</DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="font-headline text-xl font-bold text-center sm:text-left">New Chat</DialogTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => { setIsNewChatOpen(false); router.push('/chats/create-group'); }}
+                  className="rounded-xl border-primary/20 text-primary h-8 px-3 text-[10px] font-bold uppercase tracking-wider"
+                >
+                  <Users size={14} className="mr-1.5" />
+                  New Group
+                </Button>
+              </div>
             </DialogHeader>
             
             <div className="px-6 py-4">
