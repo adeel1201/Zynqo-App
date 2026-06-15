@@ -1,5 +1,8 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'Zynqo | Connect, Chat, Share, Discover',
@@ -20,9 +23,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background text-foreground selection:bg-primary/30 min-h-screen">
-        <div className="flex flex-col min-h-screen max-w-md mx-auto relative bg-background shadow-2xl overflow-hidden">
-          {children}
-        </div>
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen max-w-md mx-auto relative bg-background shadow-2xl overflow-hidden">
+            {children}
+          </div>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
