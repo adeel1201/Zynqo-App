@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { ChevronLeft, Mail, Lock, Smartphone, Facebook, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
+  
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -22,6 +24,10 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+      toast({ title: "Error", description: "Firebase is not initialized.", variant: "destructive" });
+      return;
+    }
     if (!email || !password) {
       toast({
         title: "Error",

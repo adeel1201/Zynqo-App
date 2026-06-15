@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -24,6 +25,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const auth = useFirebaseAuth();
+  const db = useFirestore();
+  
   const router = useRouter();
   const pathname = usePathname();
 
@@ -70,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let unsubscribeProfile: (() => void) | undefined;
 
     if (!auth || !db) {
-      setLoading(false);
+      if (!auth) setLoading(false);
       return;
     }
 
@@ -92,7 +97,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           setLoading(false);
         }, (error) => {
-          console.error("Error fetching profile:", error);
           setLoading(false);
         });
       } else {
@@ -105,7 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
     };
-  }, []);
+  }, [auth, db]);
 
   useEffect(() => {
     if (!loading) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -12,11 +13,9 @@ export function initializeFirebase(): {
   db: Firestore | null;
   storage: FirebaseStorage | null;
 } {
-  // Only initialize if we have an API key to avoid crash on startup
-  const hasConfig = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined";
+  const hasConfig = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined" && firebaseConfig.apiKey !== "";
   
   if (!hasConfig) {
-    console.warn("Firebase configuration is missing or invalid. Please check your .env file.");
     return { app: null, auth: null, db: null, storage: null };
   }
 
