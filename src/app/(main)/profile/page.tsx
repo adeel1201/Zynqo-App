@@ -1,7 +1,7 @@
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
-import { MOCK_CURRENT_USER } from '@/app/lib/zynqo-mock-data';
+import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -14,10 +14,85 @@ import {
   LogOut, 
   Edit3,
   Globe,
-  QrCode
+  QrCode,
+  Loader2
 } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
+  const { user, profile, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  
+  // Edit Form State
+  const [editData, setEditData] = useState({
+    displayName: profile?.displayName || '',
+    bio: profile?.bio || ''
+  });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12]">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/welcome');
+    } catch (error) {
+      console.error("Sign out error", error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setEditLoading(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        displayName: editData.displayName,
+        bio: editData.bio
+      });
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your changes have been saved successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile.",
+        variant: "destructive"
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col animate-fade-in bg-[#0E0C12]">
       <AppHeader title="Profile" showActions={false} showSearch={false} />
@@ -28,32 +103,82 @@ export default function ProfilePage() {
           <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-2xl text-white">
             <QrCode size={20} />
           </Button>
-          <Button variant="ghost" size="icon" className="bg-black/20 backdrop-blur-md rounded-2xl text-white">
-            <Edit3 size={20} />
-          </Button>
+          
+          <Dialog open={isEditing} onOpenChange={setIsEditing}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="bg-black/20 backdrop-blur-md rounded-2xl text-white"
+                onClick={() => setEditData({ displayName: profile.displayName, bio: profile.bio || '' })}
+              >
+                <Edit3 size={20} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-white/10 text-foreground rounded-[2rem]">
+              <DialogHeader>
+                <DialogTitle className="font-headline text-xl font-bold">Edit Profile</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold opacity-70">Display Name</Label>
+                  <Input 
+                    value={editData.displayName}
+                    onChange={(e) => setEditData(prev => ({ ...prev, displayName: e.target.value }))}
+                    className="bg-white/5 border-white/5 h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase tracking-widest font-bold opacity-70">Bio</Label>
+                  <Textarea 
+                    value={editData.bio}
+                    onChange={(e) => setEditData(prev => ({ ...prev, bio: e.target.value }))}
+                    className="bg-white/5 border-white/5 rounded-xl min-h-[100px]"
+                    placeholder="Tell your story..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  onClick={handleSaveProfile} 
+                  disabled={editLoading}
+                  className="w-full bg-primary hover:bg-primary/90 rounded-xl h-12 font-bold"
+                >
+                  {editLoading ? <Loader2 className="animate-spin" /> : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
             <Avatar className="w-28 h-28 border-4 border-background shadow-2xl">
-              <AvatarImage src={MOCK_CURRENT_USER.avatar} />
-              <AvatarFallback>ME</AvatarFallback>
+              <AvatarImage src={profile.profilePhoto} />
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
+                {profile.displayName?.[0]}
+              </AvatarFallback>
             </Avatar>
             <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-background rounded-full shadow-lg" />
           </div>
-          <div className="text-center">
-            <h2 className="text-xl font-headline font-bold">{MOCK_CURRENT_USER.displayName}</h2>
-            <p className="text-xs text-primary font-medium tracking-widest uppercase mt-0.5">@{MOCK_CURRENT_USER.username}</p>
+          <div className="text-center px-6">
+            <h2 className="text-xl font-headline font-bold">{profile.displayName}</h2>
+            <p className="text-xs text-primary font-medium tracking-widest uppercase mt-0.5">@{profile.username}</p>
+            {profile.bio && (
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2 max-w-[250px] italic">
+                {profile.bio}
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Bio / Stats */}
+      {/* Stats row */}
       <div className="grid grid-cols-3 gap-2 p-6 -mt-6 z-10">
         {[
-          { label: 'Friends', value: '1.2k' },
-          { label: 'Moments', value: '458' },
-          { label: 'Score', value: '25k' }
+          { label: 'Friends', value: '0' },
+          { label: 'Moments', value: '0' },
+          { label: 'Score', value: '0' }
         ].map((stat, i) => (
           <div key={i} className="bg-card/80 backdrop-blur-xl p-4 rounded-3xl border border-white/5 flex flex-col items-center shadow-lg">
             <span className="text-lg font-headline font-bold text-foreground">{stat.value}</span>
@@ -82,7 +207,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <Button variant="ghost" className="w-full h-14 rounded-3xl bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold mb-4 border border-destructive/20">
+        <Button 
+          variant="ghost" 
+          onClick={handleSignOut}
+          className="w-full h-14 rounded-3xl bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold mb-4 border border-destructive/20"
+        >
           <LogOut size={20} />
           Sign Out
         </Button>
