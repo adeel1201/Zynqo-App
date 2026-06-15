@@ -1,15 +1,31 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Send, Plus, Mic, Sparkles, MoreVertical, Phone, Video, Loader2 } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  Send, 
+  Plus, 
+  Mic, 
+  Sparkles, 
+  MoreVertical, 
+  Phone, 
+  Video, 
+  Loader2, 
+  FileIcon, 
+  Download,
+  Image as ImageIcon,
+  PlayCircle,
+  X
+} from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { aiConversationAssistant } from '@/ai/flows/ai-conversation-assistant-flow';
 import { useAuth } from '@/context/AuthContext';
 import { 
   useFirestore, 
+  useStorage,
   useDoc, 
   useCollection,
   useMemoFirebase
@@ -23,19 +39,25 @@ import {
   doc,
   updateDoc
 } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ChatDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const db = useFirestore();
+  const storage = useStorage();
+  const { toast } = useToast();
   
   const [inputText, setInputText] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load chat metadata
   const chatRef = useMemoFirebase(() => id ? doc(db, 'chats', id as string) : null, [db, id]);
@@ -80,16 +102,22 @@ export default function ChatDetailPage() {
     }
   }, [messages, user, id, db]);
 
-  const handleSend = () => {
-    if (!inputText.trim() || !user || !id || !db) return;
+  const handleSend = (mediaData?: { url: string; type: string; name?: string }) => {
+    if ((!inputText.trim() && !mediaData) || !user || !id || !db) return;
     
     const textToSend = inputText.trim();
-    const messageData = {
+    const messageData: any = {
       senderId: user.uid,
-      text: textToSend,
       timestamp: serverTimestamp(),
       status: 'sent'
     };
+
+    if (textToSend) messageData.text = textToSend;
+    if (mediaData) {
+      messageData.mediaUrl = mediaData.url;
+      messageData.mediaType = mediaData.type;
+      if (mediaData.name) messageData.fileName = mediaData.name;
+    }
 
     const messagesRef = collection(db, 'chats', id as string, 'messages');
     const currentChatRef = doc(db, 'chats', id as string);
@@ -105,7 +133,7 @@ export default function ChatDetailPage() {
 
     updateDoc(currentChatRef, {
       lastMessage: {
-        text: textToSend,
+        text: mediaData ? `Shared a ${mediaData.type}` : textToSend,
         senderId: user.uid,
         timestamp: serverTimestamp()
       },
@@ -114,6 +142,41 @@ export default function ChatDetailPage() {
     
     setInputText('');
     setAiSuggestions([]);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !id || !storage) return;
+
+    setIsUploading(true);
+    const storageRef = ref(storage, `chats/${id}/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      'state_changed',
+      null,
+      (error) => {
+        setIsUploading(false);
+        toast({
+          title: "Upload failed",
+          description: "There was an error uploading your file.",
+          variant: "destructive"
+        });
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        let type = 'document';
+        if (file.type.startsWith('image/')) type = 'image';
+        else if (file.type.startsWith('video/')) type = 'video';
+
+        handleSend({
+          url: downloadURL,
+          type,
+          name: file.name
+        });
+        setIsUploading(false);
+      }
+    );
   };
 
   const handleAiAssist = async () => {
@@ -125,7 +188,7 @@ export default function ChatDetailPage() {
       const result = await aiConversationAssistant({
         messageHistory: messages.slice(-5).map(m => ({ 
           role: m.senderId === user.uid ? 'sender' as const : 'receiver' as const, 
-          text: m.text 
+          text: m.text || (m.mediaUrl ? `[Shared ${m.mediaType}]` : "")
         })),
         lastReceivedMessage: lastReceived?.text || "Hello",
         targetLanguage: "English"
@@ -219,13 +282,60 @@ export default function ChatDetailPage() {
           return (
             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in`}>
               <div className={`
-                max-w-[85%] px-4 py-3 rounded-[1.5rem] text-sm shadow-sm
+                max-w-[85%] rounded-[1.5rem] shadow-sm overflow-hidden
                 ${isMe 
                   ? 'bg-primary text-primary-foreground rounded-tr-none' 
                   : 'bg-card text-foreground rounded-tl-none border border-white/5'
                 }
               `}>
-                <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                {msg.mediaUrl && (
+                  <div className="relative group">
+                    {msg.mediaType === 'image' ? (
+                      <div className="relative aspect-square w-full min-w-[200px] max-w-[300px]">
+                        <Image 
+                          src={msg.mediaUrl} 
+                          alt="Shared Image" 
+                          fill 
+                          className="object-cover"
+                          data-ai-hint="shared image"
+                        />
+                      </div>
+                    ) : msg.mediaType === 'video' ? (
+                      <div className="relative max-w-[300px]">
+                        <video 
+                          src={msg.mediaUrl} 
+                          controls 
+                          className="w-full rounded-t-lg"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-4 flex items-center gap-3 bg-white/5">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                          <FileIcon size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold truncate">{msg.fileName || 'Shared Document'}</p>
+                          <p className="text-[10px] opacity-60 uppercase tracking-widest font-bold">Document</p>
+                        </div>
+                        <a 
+                          href={msg.mediaUrl} 
+                          download 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                        >
+                          <Download size={14} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {msg.text && (
+                  <div className="px-4 py-3">
+                    <p className="leading-relaxed whitespace-pre-wrap text-sm">{msg.text}</p>
+                  </div>
+                )}
               </div>
               <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                 <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter">
@@ -271,8 +381,22 @@ export default function ChatDetailPage() {
         )}
 
         <div className="flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded-[2.5rem] p-2 border border-white/10 shadow-2xl">
-          <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0 rounded-full h-10 w-10 hover:bg-white/5">
-            <Plus size={22} />
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+            accept="image/*,video/*,.pdf,.doc,.docx"
+          />
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="text-muted-foreground shrink-0 rounded-full h-10 w-10 hover:bg-white/5"
+          >
+            {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} />}
           </Button>
           
           <input 
@@ -302,9 +426,9 @@ export default function ChatDetailPage() {
               </Button>
             )}
             
-            {inputText.trim() ? (
+            {(inputText.trim()) ? (
               <Button 
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 size="icon" 
                 className="rounded-full bg-primary hover:bg-primary/90 h-10 w-10 shadow-lg shadow-primary/20 active:scale-90 transition-transform"
               >
