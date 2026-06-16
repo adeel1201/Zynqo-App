@@ -1,12 +1,12 @@
 {
   "name": "Zynqo",
   "short_name": "Zynqo",
-  "description": "Connect, Chat, Share, Discover",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#6A0DAD",
   "orientation": "portrait",
+  "description": "Premium modern messaging and social networking platform.",
   "icons": [
     {
       "src": "/icon-192.png",
