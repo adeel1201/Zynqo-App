@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -42,7 +41,7 @@ export default function ChannelsPage() {
   }, [channels, user?.uid]);
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-24">
+    <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-24">
       <AppHeader title="Channels" showSearch={false} />
 
       <div className="p-4 space-y-6">
@@ -53,7 +52,7 @@ export default function ChannelsPage() {
             placeholder="Search channels..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary text-sm"
+            className="h-12 pl-12 bg-muted border-border rounded-2xl focus-visible:ring-primary text-sm text-foreground"
           />
         </div>
 
@@ -88,7 +87,7 @@ export default function ChannelsPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-card/10 rounded-[2.5rem] border border-dashed border-white/5">
+            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-[2.5rem] border border-dashed border-border">
               <Radio className="text-muted-foreground opacity-20 mb-4" size={32} />
               <p className="text-xs text-muted-foreground font-medium">No channels found.</p>
             </div>
@@ -102,7 +101,7 @@ export default function ChannelsPage() {
         className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-30 transition-transform active:scale-90"
         size="icon"
       >
-        <Plus size={24} />
+        <Plus size={24} className="text-white" />
       </Button>
     </div>
   );
@@ -112,16 +111,16 @@ function ChannelCard({ channel, onClick }: { channel: any; onClick: () => void }
   return (
     <div 
       onClick={onClick}
-      className="flex items-center gap-4 bg-card/30 p-4 rounded-2xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer group"
+      className="flex items-center gap-4 bg-card p-4 rounded-2xl border border-border hover:bg-muted/30 transition-all cursor-pointer group shadow-sm"
     >
-      <Avatar className="w-12 h-12 border border-white/10 rounded-xl">
+      <Avatar className="w-12 h-12 border border-border rounded-xl">
         <AvatarImage src={channel.photo} />
         <AvatarFallback className="bg-primary/10 text-primary">
           <Radio size={20} />
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <h5 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{channel.name}</h5>
+        <h5 className="font-bold text-sm truncate group-hover:text-primary transition-colors text-foreground">{channel.name}</h5>
         <p className="text-[10px] text-muted-foreground truncate font-medium mt-0.5">{channel.description || 'No description'}</p>
         <div className="flex items-center gap-2 mt-1.5">
           <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase tracking-wider">
@@ -129,7 +128,7 @@ function ChannelCard({ channel, onClick }: { channel: any; onClick: () => void }
             <span>{channel.followerIds?.length || 0} Followers</span>
           </div>
           {channel.type === 'private' && (
-             <span className="text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-muted-foreground uppercase font-black">Private</span>
+             <span className="text-[8px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-black">Private</span>
           )}
         </div>
       </div>

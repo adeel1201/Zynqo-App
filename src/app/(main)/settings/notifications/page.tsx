@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -44,12 +43,12 @@ export default function NotificationSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-24">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-white/5">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-24">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">Notifications</h2>
+        <h2 className="font-bold text-lg text-foreground">Notifications</h2>
       </header>
 
       <div className="p-4 space-y-8">
@@ -58,12 +57,12 @@ export default function NotificationSettingsPage() {
             <Bell size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-bold">Push Notifications</h3>
+            <h3 className="text-lg font-bold text-foreground">Push Notifications</h3>
             <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Control your alerts</p>
           </div>
         </div>
 
-        <div className="bg-card/40 rounded-[2.5rem] border border-white/5 divide-y divide-white/5">
+        <div className="bg-card rounded-[2.5rem] border border-border divide-y divide-border shadow-sm overflow-hidden">
           <NotifyRow 
             icon={MessageSquare} 
             label="Messages" 
@@ -101,7 +100,7 @@ export default function NotificationSettingsPage() {
           />
         </div>
 
-        <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/5">
+        <div className="px-6 py-4 bg-muted/30 rounded-2xl border border-border">
            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic text-center">
              Note: System-wide critical alerts cannot be disabled for your security.
            </p>
@@ -115,10 +114,10 @@ function NotifyRow({ icon: Icon, label, checked, onCheckedChange, disabled }: an
   return (
     <div className="flex items-center justify-between p-5">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary/70">
+        <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-primary/70">
           <Icon size={20} />
         </div>
-        <span className="text-sm font-bold">{label}</span>
+        <span className="text-sm font-bold text-foreground">{label}</span>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>

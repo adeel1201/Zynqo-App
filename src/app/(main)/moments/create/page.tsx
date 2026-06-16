@@ -82,7 +82,7 @@ export default function CreateMomentPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-10">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10">
       <AppHeader title="New Moment" showSearch={false} showActions={false} />
 
       <form onSubmit={handleCreate} className="p-6 space-y-6">
@@ -91,12 +91,12 @@ export default function CreateMomentPage() {
             placeholder="What's happening?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[150px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4 text-base resize-none"
+            className="min-h-[150px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 text-base resize-none text-foreground"
             required={!selectedFile}
           />
 
           {previewUrl && (
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 group bg-black/40">
+            <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border group bg-black/5">
               {fileType === 'video' ? (
                 <video src={previewUrl} className="w-full h-full object-contain" controls />
               ) : (
@@ -107,7 +107,7 @@ export default function CreateMomentPage() {
                 variant="destructive"
                 size="icon"
                 onClick={() => { setPreviewUrl(null); setSelectedFile(null); setFileType(null); }}
-                className="absolute top-2 right-2 rounded-full h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute top-2 right-2 rounded-full h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
               >
                 <X size={16} />
               </Button>
@@ -119,7 +119,7 @@ export default function CreateMomentPage() {
               type="button"
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-xl border-white/10 bg-white/5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all flex items-center gap-2"
+              className="rounded-xl border-border bg-white text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all flex items-center gap-2"
             >
               {selectedFile && fileType === 'video' ? <VideoIcon size={20} /> : <ImageIcon size={20} />}
               <span>{selectedFile ? 'Change Media' : 'Add Image/Video'}</span>
@@ -137,7 +137,7 @@ export default function CreateMomentPage() {
         <Button
           type="submit"
           disabled={isSubmitting || (!content.trim() && !selectedFile)}
-          className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+          className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-white"
         >
           {isSubmitting ? (
             <Loader2 className="animate-spin" size={24} />

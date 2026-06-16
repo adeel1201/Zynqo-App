@@ -213,7 +213,7 @@ export default function DiscoverPage() {
               <div 
                 key={moment.id} 
                 ref={isLast ? lastMomentRef : null}
-                className="bg-white rounded-[2rem] overflow-hidden border border-border shadow-sm animate-fade-in"
+                className="bg-card rounded-[2rem] overflow-hidden border border-border shadow-sm animate-fade-in"
               >
                 <div className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ export default function DiscoverPage() {
                     <Heart size={20} className={cn(isLiked && "fill-current")} />
                     <span className="text-xs font-bold">{moment.likes?.length || 0}</span>
                   </button>
-                  <button onClick={() => { setSelectedMomentId(moment.id); setIsCommentsOpen(true); }} className="flex items-center gap-2 text-muted-foreground">
+                  <button onClick={() => { setSelectedMomentId(moment.id); setIsCommentsOpen(true); }} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                     <MessageSquare size={20} />
                     <span className="text-xs font-bold">Comments</span>
                   </button>
@@ -264,7 +264,7 @@ export default function DiscoverPage() {
           {momentsLoading && <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-primary" size={24} /></div>}
           {!hasMoreMoments && moments.length > 0 && <p className="text-center text-[10px] text-muted-foreground uppercase font-black opacity-30 py-4">No more moments</p>}
           <Button onClick={() => router.push('/moments/create')} className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-50 transition-transform active:scale-90" size="icon">
-            <Plus size={24} />
+            <Plus size={24} className="text-white" />
           </Button>
         </TabsContent>
 
@@ -278,11 +278,11 @@ export default function DiscoverPage() {
                 <h3 className="text-lg font-bold text-foreground">Ghost Mode Active</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed px-8">Enable location sharing in your profile settings to see people nearby.</p>
               </div>
-              <Button onClick={() => router.push('/profile/edit')} className="rounded-2xl bg-primary">Settings</Button>
+              <Button onClick={() => router.push('/profile/edit')} className="rounded-2xl bg-primary text-white">Settings</Button>
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-border flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-sm">
+              <div className="bg-card p-6 rounded-[2.5rem] border border-border flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-sm">
                 <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/10 animate-ping rounded-full" />
@@ -312,7 +312,7 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Users size={16} className="text-primary" /> People Nearby</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyUsers.map((u: any) => (
-                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-border hover:bg-muted/50 transition-all cursor-pointer group shadow-sm">
+                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-card p-4 rounded-3xl border border-border hover:bg-muted transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 rounded-2xl border border-primary/20">
                           <AvatarImage src={u.profilePhoto} />
@@ -336,7 +336,7 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Radio size={16} className="text-secondary" /> Local Channels</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyChannels.map((c: any) => (
-                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-secondary/5 p-4 rounded-3xl border border-secondary/10 hover:bg-secondary/10 transition-all cursor-pointer group shadow-sm">
+                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-border hover:bg-secondary/5 transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 rounded-2xl border border-secondary/20 bg-secondary/10">
                           <AvatarImage src={c.photo} />

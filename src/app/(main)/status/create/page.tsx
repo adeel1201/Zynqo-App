@@ -88,32 +88,32 @@ export default function CreateStatusPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in relative">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-white/5">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in relative">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">Add to Status</h2>
+        <h2 className="font-bold text-lg text-foreground">Add to Status</h2>
       </header>
 
       <div className="flex-1 flex flex-col p-6 gap-8">
         {!previewUrl ? (
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-[3rem] bg-white/5 cursor-pointer hover:bg-white/10 transition-colors gap-4"
+            className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[3rem] bg-muted/30 cursor-pointer hover:bg-muted transition-colors gap-4"
           >
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-sm">
               <Upload size={32} />
             </div>
             <div className="text-center">
-              <p className="font-bold text-sm">Select Image or Video</p>
+              <p className="font-bold text-sm text-foreground">Select Image or Video</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Maximum 10MB</p>
             </div>
             <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" className="hidden" />
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-6 animate-scale-in">
-            <div className="relative flex-1 rounded-[3rem] overflow-hidden bg-black/40 border border-white/5 shadow-2xl">
+            <div className="relative flex-1 rounded-[3rem] overflow-hidden bg-black/5 border border-border shadow-lg">
               {selectedFile?.type.startsWith('video/') ? (
                 <video src={previewUrl} className="w-full h-full object-contain" controls />
               ) : (
@@ -135,7 +135,7 @@ export default function CreateStatusPage() {
                   placeholder="What's on your mind?" 
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary text-sm"
+                  className="h-14 bg-muted border-border rounded-2xl focus-visible:ring-primary text-sm text-foreground"
                 />
               </div>
 
@@ -147,7 +147,7 @@ export default function CreateStatusPage() {
               ) : (
                 <Button 
                   type="submit"
-                  className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20"
+                  className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20 text-white"
                 >
                   <Send size={20} className="mr-2" />
                   Share Status

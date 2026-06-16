@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from 'react';
@@ -99,12 +98,12 @@ export default function SetupChannelPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-10">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-white/5">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">Create Channel</h2>
+        <h2 className="font-bold text-lg text-foreground">Create Channel</h2>
       </header>
 
       <div className="p-6 space-y-8">
@@ -113,16 +112,16 @@ export default function SetupChannelPage() {
             <Sparkles size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-2xl font-headline font-bold">New Broadcast Presence</h3>
+            <h3 className="text-2xl font-headline font-bold text-foreground">New Broadcast Presence</h3>
             <p className="text-sm text-muted-foreground leading-relaxed px-4">Define how you appear in the video channels feed.</p>
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-2xl bg-card">
+            <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-xl bg-card">
               <AvatarImage src={previewAvatar || profile?.profilePhoto || ''} />
-              <AvatarFallback className="bg-white/5 text-primary/40 text-3xl">
+              <AvatarFallback className="bg-muted text-primary/40 text-3xl">
                 <PlayCircle size={48} />
               </AvatarFallback>
             </Avatar>
@@ -153,7 +152,7 @@ export default function SetupChannelPage() {
               value={formData.name}
               onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
               placeholder="e.g., Tech Insights"
-              className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+              className="h-14 bg-muted border-border rounded-2xl focus-visible:ring-primary text-foreground"
               required
             />
           </div>
@@ -164,7 +163,7 @@ export default function SetupChannelPage() {
               value={formData.username}
               onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
               placeholder="unique_handle" 
-              className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+              className="h-14 bg-muted border-border rounded-2xl focus-visible:ring-primary text-foreground"
               required
             />
           </div>
@@ -172,15 +171,15 @@ export default function SetupChannelPage() {
           <div className="space-y-2">
             <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Privacy Setting</Label>
             <Select value={formData.privacy} onValueChange={(val) => setFormData(p => ({ ...p, privacy: val }))}>
-              <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
+              <SelectTrigger className="h-14 bg-muted border-border rounded-2xl focus:ring-primary px-4">
                 <SelectValue placeholder="Select privacy" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
+              <SelectContent className="bg-white border-border">
                 <SelectItem value="public">
                   <div className="flex items-center gap-3">
                     <Globe size={16} className="text-primary" />
                     <div className="flex flex-col">
-                      <span className="font-bold">Public</span>
+                      <span className="font-bold text-foreground">Public</span>
                       <span className="text-[8px] text-muted-foreground">Visible to everyone</span>
                     </div>
                   </div>
@@ -189,7 +188,7 @@ export default function SetupChannelPage() {
                   <div className="flex items-center gap-3">
                     <Lock size={16} className="text-yellow-500" />
                     <div className="flex flex-col">
-                      <span className="font-bold">Private</span>
+                      <span className="font-bold text-foreground">Private</span>
                       <span className="text-[8px] text-muted-foreground">Only followers can view</span>
                     </div>
                   </div>
@@ -198,7 +197,7 @@ export default function SetupChannelPage() {
                   <div className="flex items-center gap-3">
                     <EyeOff size={16} className="text-muted-foreground" />
                     <div className="flex flex-col">
-                      <span className="font-bold">Hidden</span>
+                      <span className="font-bold text-foreground">Hidden</span>
                       <span className="text-[8px] text-muted-foreground">Direct link only</span>
                     </div>
                   </div>
@@ -213,7 +212,7 @@ export default function SetupChannelPage() {
               value={formData.bio}
               onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
               placeholder="Tell your audience what to expect..." 
-              className="min-h-[100px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4 resize-none"
+              className="min-h-[100px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 resize-none text-foreground"
             />
           </div>
 
@@ -221,7 +220,7 @@ export default function SetupChannelPage() {
             <Button 
               type="submit"
               disabled={isLoading || isUploading || !formData.name.trim() || !formData.username.trim()}
-              className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 font-bold text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+              className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 font-bold text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-2 text-white"
             >
               {isLoading ? <Loader2 className="animate-spin" /> : (
                 <>

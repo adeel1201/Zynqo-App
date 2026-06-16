@@ -56,7 +56,7 @@ export default function ContactsPage() {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-20">
+    <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-20">
       <AppHeader title="Contacts" showSearch={false} />
       
       <div className="p-4 space-y-4">
@@ -66,7 +66,7 @@ export default function ContactsPage() {
             placeholder="Search contacts..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+            className="h-12 pl-12 bg-muted border-border rounded-2xl focus-visible:ring-primary text-foreground"
           />
         </div>
 
@@ -80,20 +80,20 @@ export default function ContactsPage() {
             contactProfiles.map((profile) => (
               <div 
                 key={profile.uid}
-                className="flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 transition-all group"
+                className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted transition-all group"
               >
                 <Link href={`/users/${profile.uid}`} className="flex items-center gap-4 flex-1">
                   <div className="relative">
-                    <Avatar className="h-12 w-12 border border-white/5">
+                    <Avatar className="h-12 w-12 border border-border shadow-sm">
                       <AvatarImage src={profile.profilePhoto} />
                       <AvatarFallback>{profile.displayName?.[0]}</AvatarFallback>
                     </Avatar>
                     {profile.onlineStatus === 'online' && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0E0C12]" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm truncate">{profile.displayName}</h4>
+                    <h4 className="font-bold text-sm truncate text-foreground">{profile.displayName}</h4>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">@{profile.username}</p>
                   </div>
                 </Link>
@@ -119,10 +119,10 @@ export default function ContactsPage() {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-              <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
+              <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-4">
                 <Users size={32} className="text-muted-foreground opacity-20" />
               </div>
-              <h4 className="font-bold text-lg mb-1">{searchQuery ? 'No results found' : 'No contacts yet'}</h4>
+              <h4 className="font-bold text-lg mb-1 text-foreground">{searchQuery ? 'No results found' : 'No contacts yet'}</h4>
               <p className="text-xs text-muted-foreground">Find people to connect with in the Discover tab or search for friends.</p>
               <Button 
                 onClick={() => router.push('/chats')} 

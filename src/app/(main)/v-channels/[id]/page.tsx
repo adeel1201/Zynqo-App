@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -49,17 +48,6 @@ import {
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 
 export default function CreatorChannelProfilePage() {
@@ -124,22 +112,22 @@ export default function CreatorChannelProfilePage() {
   };
 
   if (channelLoading || followLoading) return (
-    <div className="h-screen bg-[#0E0C12] flex items-center justify-center">
+    <div className="h-screen bg-background flex items-center justify-center">
        <Loader2 className="animate-spin text-primary" size={32} />
     </div>
   );
 
   if (!channel) return (
-    <div className="h-screen bg-[#0E0C12] flex flex-col items-center justify-center p-8 text-center gap-4">
+    <div className="h-screen bg-background flex flex-col items-center justify-center p-8 text-center gap-4">
        <p className="text-muted-foreground">Channel not found.</p>
        <Button onClick={() => router.push('/v-channels')} variant="outline" className="rounded-2xl">Back to Feed</Button>
     </div>
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] text-white pb-20 animate-fade-in relative">
-      <header className="sticky top-0 z-50 safe-top flex items-center justify-between px-2 h-16 bg-[#0E0C12]/80 backdrop-blur-xl border-b border-white/5">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full">
+    <div className="flex flex-col min-h-screen bg-background text-foreground pb-20 animate-fade-in relative">
+      <header className="sticky top-0 z-50 safe-top flex items-center justify-between px-2 h-16 bg-white/80 backdrop-blur-xl border-b border-border">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-foreground rounded-full">
           <ChevronLeft size={28} />
         </Button>
         <div className="flex flex-col items-center">
@@ -150,10 +138,10 @@ export default function CreatorChannelProfilePage() {
            </span>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="text-white rounded-full">
+          <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
             <Share2 size={20} />
           </Button>
-          <Button variant="ghost" size="icon" className="text-white rounded-full">
+          <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
             <MoreVertical size={20} />
           </Button>
         </div>
@@ -161,12 +149,12 @@ export default function CreatorChannelProfilePage() {
 
       <div className="px-6 pt-6 flex flex-col items-center">
         <div className="relative">
-           <Avatar className="w-24 h-24 border-2 border-white/5 shadow-2xl">
+           <Avatar className="w-24 h-24 border-2 border-border shadow-lg">
               <AvatarImage src={channel.avatar} />
               <AvatarFallback className="text-3xl font-bold bg-primary/10 text-primary">{channel.name?.[0]}</AvatarFallback>
            </Avatar>
            {channel.isVerified && (
-             <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-[#0E0C12]">
+             <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white">
                <ShieldCheck size={14} />
              </div>
            )}
@@ -178,7 +166,7 @@ export default function CreatorChannelProfilePage() {
               <Button 
                 onClick={() => router.push(`/v-channels/edit/${id}`)}
                 variant="outline"
-                className="mt-4 h-10 px-8 rounded-xl bg-white/5 border-white/10 text-xs font-bold hover:bg-white/10"
+                className="mt-4 h-10 px-8 rounded-xl bg-muted border-border text-xs font-bold hover:bg-muted/80"
               >
                 <Edit3 size={14} className="mr-2" /> Edit Channel
               </Button>
@@ -187,7 +175,7 @@ export default function CreatorChannelProfilePage() {
                 onClick={handleFollow}
                 className={cn(
                   "mt-4 h-10 px-12 rounded-xl font-bold transition-all text-xs",
-                  isFollowing ? "bg-white/5 border border-white/10 text-white" : "bg-primary text-white shadow-lg shadow-primary/20"
+                  isFollowing ? "bg-muted border border-border text-foreground" : "bg-primary text-white shadow-lg shadow-primary/20"
                 )}
               >
                 {isFollowing ? <><UserCheck size={14} className="mr-2" /> Following</> : 'Follow'}
@@ -197,15 +185,15 @@ export default function CreatorChannelProfilePage() {
 
         <div className="mt-6 flex items-center gap-6">
            <button onClick={() => setActiveStatModal('following')} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-              <span className="font-black text-sm">{channel.followingCount || 0}</span>
+              <span className="font-black text-sm text-foreground">{channel.followingCount || 0}</span>
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Following</span>
            </button>
            <button onClick={() => setActiveStatModal('followers')} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity">
-              <span className="font-black text-sm">{channel.followerCount || 0}</span>
+              <span className="font-black text-sm text-foreground">{channel.followerCount || 0}</span>
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Followers</span>
            </button>
            <div className="flex items-center gap-1.5">
-              <span className="font-black text-sm">{channel.totalLikes || 0}</span>
+              <span className="font-black text-sm text-foreground">{channel.totalLikes || 0}</span>
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Likes</span>
            </div>
         </div>
@@ -218,18 +206,18 @@ export default function CreatorChannelProfilePage() {
       </div>
 
       {!canViewContent ? (
-        <div className="mt-12 flex flex-col items-center justify-center p-12 text-center bg-card/20 border-y border-white/5">
-           <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center text-muted-foreground mb-6">
+        <div className="mt-12 flex flex-col items-center justify-center p-12 text-center bg-muted/20 border-y border-border">
+           <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center text-muted-foreground mb-6 shadow-sm">
               <Lock size={32} />
            </div>
-           <h4 className="font-bold text-lg">Private Channel</h4>
+           <h4 className="font-bold text-lg text-foreground">Private Channel</h4>
            <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-[200px]">
               Only approved followers can see the content shared by @{channel.username}.
            </p>
            {!isFollowing && (
               <Button 
                 onClick={handleFollow}
-                className="mt-6 rounded-2xl bg-primary px-8 h-12 font-bold shadow-lg shadow-primary/20"
+                className="mt-6 rounded-2xl bg-primary px-8 h-12 font-bold shadow-lg shadow-primary/20 text-white"
               >
                 Follow to Request Access
               </Button>
@@ -237,7 +225,7 @@ export default function CreatorChannelProfilePage() {
         </div>
       ) : (
         <Tabs defaultValue="videos" className="w-full mt-8">
-          <TabsList className="w-full h-12 bg-transparent border-y border-white/5 p-0 rounded-none flex">
+          <TabsList className="w-full h-12 bg-transparent border-y border-border p-0 rounded-none flex">
             <TabsTrigger value="videos" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary bg-transparent text-muted-foreground data-[state=active]:text-primary transition-all">
                <Grid size={18} />
             </TabsTrigger>
@@ -252,7 +240,7 @@ export default function CreatorChannelProfilePage() {
           <TabsContent value="videos" className="mt-0">
             <div className="grid grid-cols-3 gap-0.5">
               {posts.map((post: any) => (
-                <div key={post.id} onClick={() => router.push('/v-channels')} className="relative aspect-[3/4] bg-white/5 overflow-hidden cursor-pointer group">
+                <div key={post.id} onClick={() => router.push('/v-channels')} className="relative aspect-[3/4] bg-muted overflow-hidden cursor-pointer group">
                     {post.type === 'video' ? (
                       <video src={post.mediaUrl} className="w-full h-full object-cover" muted playsInline />
                     ) : post.type === 'image' ? (
@@ -269,17 +257,17 @@ export default function CreatorChannelProfilePage() {
             </div>
             {posts.length === 0 && (
               <div className="py-20 flex flex-col items-center text-center px-8 gap-4">
-                <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground opacity-20">
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground opacity-20">
                   <VideoIcon size={40} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-white/60 uppercase tracking-widest">No broadcasts yet</p>
+                  <p className="text-sm font-bold text-foreground/60 uppercase tracking-widest">No broadcasts yet</p>
                   <p className="text-xs text-muted-foreground">Start sharing your social broadcasts with the world.</p>
                 </div>
                 {isMe && (
                   <Button 
                     onClick={() => router.push('/v-channels/create')}
-                    className="rounded-full bg-primary px-8 mt-2 h-11 font-bold shadow-lg shadow-primary/20"
+                    className="rounded-full bg-primary px-8 mt-2 h-11 font-bold shadow-lg shadow-primary/20 text-white"
                   >
                     Upload Your First Video
                   </Button>
@@ -291,7 +279,7 @@ export default function CreatorChannelProfilePage() {
           <TabsContent value="liked">
              <div className="py-20 flex flex-col items-center text-muted-foreground/40 text-center px-8">
                 <Lock size={40} className="mb-4" />
-                <h4 className="text-sm font-bold text-white mb-1">Liked videos are restricted</h4>
+                <h4 className="text-sm font-bold text-foreground mb-1">Liked videos are restricted</h4>
                 <p className="text-xs">Only the channel owner can view their interactions.</p>
              </div>
           </TabsContent>
@@ -309,14 +297,13 @@ export default function CreatorChannelProfilePage() {
       {isMe && (
         <Button 
           onClick={() => router.push('/v-channels/create')}
-          className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-50 transition-transform active:scale-90 flex items-center justify-center"
+          className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-50 transition-transform active:scale-90 flex items-center justify-center text-white"
           size="icon"
         >
           <Plus size={28} />
         </Button>
       )}
 
-      {/* Follower/Following Modals */}
       <StatListModal 
         isOpen={!!activeStatModal} 
         onClose={() => setActiveStatModal(null)} 
@@ -342,8 +329,8 @@ function StatListModal({ isOpen, onClose, type, targetId }: { isOpen: boolean; o
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#0E0C12] border-white/5 text-white sm:max-w-[400px] h-[60vh] flex flex-col p-0 overflow-hidden rounded-t-[2rem] sm:rounded-[2rem]">
-        <DialogHeader className="p-4 border-b border-white/5">
+      <DialogContent className="bg-white border-border text-foreground sm:max-w-[400px] h-[60vh] flex flex-col p-0 overflow-hidden rounded-t-[2rem] sm:rounded-[2rem]">
+        <DialogHeader className="p-4 border-b border-border">
            <DialogTitle className="text-center font-bold text-sm capitalize">{type}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
@@ -353,15 +340,15 @@ function StatListModal({ isOpen, onClose, type, targetId }: { isOpen: boolean; o
              follows.map((f: any) => (
                <div key={f.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                     <Avatar className="w-10 h-10 border border-white/5">
+                     <Avatar className="w-10 h-10 border border-border shadow-sm">
                         <AvatarFallback>{type === 'followers' ? 'U' : 'C'}</AvatarFallback>
                      </Avatar>
                      <div>
-                        <p className="text-xs font-bold">User {f.id.slice(0, 5)}</p>
+                        <p className="text-xs font-bold text-foreground">User {f.id.slice(0, 5)}</p>
                         <p className="text-[10px] text-muted-foreground">Joined Zynqo</p>
                      </div>
                   </div>
-                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-[10px] font-bold border-white/10">View</Button>
+                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-[10px] font-bold border-border">View</Button>
                </div>
              ))
            ) : (

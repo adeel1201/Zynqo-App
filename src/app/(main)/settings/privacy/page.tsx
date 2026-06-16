@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -53,18 +52,18 @@ export default function PrivacySettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-24">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-white/5">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-24">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">Privacy & Security</h2>
+        <h2 className="font-bold text-lg text-foreground">Privacy & Security</h2>
       </header>
 
       <div className="p-4 space-y-6">
         <section className="space-y-4">
           <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Visibility</h4>
-          <div className="bg-card/40 rounded-[2.5rem] border border-white/5 divide-y divide-white/5">
+          <div className="bg-card rounded-[2.5rem] border border-border divide-y divide-border shadow-sm overflow-hidden">
             <PrivacyToggle 
               icon={Ghost} 
               label="Ghost Mode" 
@@ -86,14 +85,14 @@ export default function PrivacySettingsPage() {
 
         <section className="space-y-4">
           <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Management</h4>
-          <div className="bg-card/40 rounded-[2.5rem] border border-white/5 divide-y divide-white/5">
-            <button className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors text-left">
+          <div className="bg-card rounded-[2.5rem] border border-border divide-y divide-border shadow-sm overflow-hidden">
+            <button className="w-full flex items-center justify-between p-5 hover:bg-muted transition-colors text-left">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive">
                   <UserX size={20} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Blocked Users</p>
+                  <p className="text-sm font-bold text-foreground">Blocked Users</p>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">
                     {privacy.blockedUserIds?.length || 0} Accounts Blocked
                   </p>
@@ -101,13 +100,13 @@ export default function PrivacySettingsPage() {
               </div>
               <ChevronLeft size={16} className="text-muted-foreground/30 rotate-180" />
             </button>
-            <button className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors text-left">
+            <button className="w-full flex items-center justify-between p-5 hover:bg-muted transition-colors text-left">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-500">
                   <AlertTriangle size={20} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Reported Content</p>
+                  <p className="text-sm font-bold text-foreground">Reported Content</p>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">View your reports</p>
                 </div>
               </div>
@@ -136,11 +135,11 @@ function PrivacyToggle({ icon: Icon, label, description, checked, onCheckedChang
   return (
     <div className="flex items-center justify-between p-5">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-muted-foreground">
+        <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
           <Icon size={20} />
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-bold">{label}</span>
+          <span className="text-sm font-bold text-foreground">{label}</span>
           <span className="text-[10px] text-muted-foreground font-medium">{description}</span>
         </div>
       </div>

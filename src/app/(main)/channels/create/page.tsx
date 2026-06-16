@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from 'react';
@@ -83,18 +82,18 @@ export default function CreateChannelPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-10">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-white/5">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">New Channel</h2>
+        <h2 className="font-bold text-lg text-foreground">New Channel</h2>
       </header>
 
       <div className="p-6 space-y-8">
         <div className="flex flex-col items-center gap-4">
           <div className="relative group">
-            <Avatar className="w-32 h-32 border-4 border-primary/20 bg-white/5 rounded-[2rem]">
+            <Avatar className="w-32 h-32 border-4 border-primary/20 bg-muted rounded-[2rem]">
               <AvatarImage src={channelPhoto || ''} />
               <AvatarFallback className="bg-transparent text-primary/40">
                 <Radio size={64} />
@@ -115,7 +114,7 @@ export default function CreateChannelPage() {
               placeholder="e.g., Daily Tech News" 
               value={formData.name}
               onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-              className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+              className="h-14 bg-muted border-border rounded-2xl focus-visible:ring-primary text-foreground"
               required
             />
           </div>
@@ -123,13 +122,13 @@ export default function CreateChannelPage() {
           <div className="space-y-2">
             <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Visibility</Label>
             <Select value={formData.type} onValueChange={(val) => setFormData(p => ({ ...p, type: val }))}>
-              <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
+              <SelectTrigger className="h-14 bg-muted border-border rounded-2xl focus:ring-primary px-4">
                 <div className="flex items-center gap-3">
                   {formData.type === 'public' ? <Globe size={18} className="text-primary" /> : <Lock size={18} className="text-muted-foreground" />}
                   <SelectValue placeholder="Select visibility" />
                 </div>
               </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
+              <SelectContent className="bg-white border-border">
                 <SelectItem value="public">
                    <div className="flex flex-col gap-0.5">
                      <span className="font-bold">Public</span>
@@ -152,7 +151,7 @@ export default function CreateChannelPage() {
               placeholder="What will you broadcast?" 
               value={formData.description}
               onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
-              className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4"
+              className="min-h-[120px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 text-foreground"
             />
           </div>
 
@@ -160,7 +159,7 @@ export default function CreateChannelPage() {
             <Button 
               type="submit"
               disabled={isLoading || !formData.name.trim()}
-              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20"
+              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20 text-white"
             >
               {isLoading ? <Loader2 className="animate-spin" /> : "Create Channel"}
             </Button>

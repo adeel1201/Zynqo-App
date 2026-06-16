@@ -80,7 +80,7 @@ export default function MomentsPage() {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen">
+    <div className="flex flex-col animate-fade-in bg-background min-h-screen">
       <AppHeader title="Moments" showActions={false} />
       
       <div className="flex flex-col gap-4 p-4 pb-32">
@@ -96,16 +96,16 @@ export default function MomentsPage() {
               <div 
                 key={moment.id} 
                 ref={isLastElement ? lastMomentElementRef : null}
-                className="bg-card rounded-[2rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300"
+                className="bg-card rounded-[2rem] overflow-hidden border border-border shadow-sm transition-all duration-300"
               >
                 <div className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10 border border-primary/20">
                       <AvatarImage src={moment.userPhoto} />
-                      <AvatarFallback>{moment.userName?.[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/5 text-primary">{moment.userName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h4 className="font-bold text-sm leading-none flex items-center gap-1">
+                      <h4 className="font-bold text-sm leading-none flex items-center gap-1 text-foreground">
                         {moment.userName}
                       </h4>
                       <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
@@ -124,7 +124,7 @@ export default function MomentsPage() {
                 )}
 
                 {moment.videoUrl ? (
-                  <div className="relative aspect-video w-full bg-black/40">
+                  <div className="relative aspect-video w-full bg-black/5">
                     <video 
                       src={moment.videoUrl} 
                       className="w-full h-full object-contain" 
@@ -144,14 +144,14 @@ export default function MomentsPage() {
                   </div>
                 ) : null}
 
-                <div className="px-5 py-4 border-t border-white/5 flex items-center gap-6">
+                <div className="px-5 py-4 border-t border-border flex items-center gap-6">
                   <button 
                     onClick={() => handleToggleLike(moment.id, moment.likes)}
                     className="flex items-center gap-2 group transition-colors"
                   >
                     <div className={cn(
                       "p-2 rounded-full transition-all duration-300",
-                      isLiked ? "bg-red-500/10 text-red-500" : "bg-white/5 text-muted-foreground group-hover:bg-red-500/5 group-hover:text-red-400"
+                      isLiked ? "bg-red-500/10 text-red-500" : "bg-muted text-muted-foreground group-hover:bg-red-500/5 group-hover:text-red-400"
                     )}>
                       <Heart size={20} className={cn(isLiked && "fill-current")} />
                     </div>
@@ -167,7 +167,7 @@ export default function MomentsPage() {
                     onClick={() => handleOpenComments(moment.id)}
                     className="flex items-center gap-2 group transition-colors"
                   >
-                    <div className="p-2 rounded-full bg-white/5 text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary transition-all">
+                    <div className="p-2 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary transition-all">
                       <MessageSquare size={20} />
                     </div>
                     <span className="text-xs font-bold text-muted-foreground group-hover:text-primary transition-colors">
@@ -180,10 +180,10 @@ export default function MomentsPage() {
           })
         ) : !loading && (
           <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
-              <MessageSquare size={32} className="text-muted-foreground opacity-20" />
+            <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-4">
+              <MessageSquare size={32} className="text-muted-foreground opacity-40" />
             </div>
-            <h4 className="font-bold text-lg mb-1">No moments yet</h4>
+            <h4 className="font-bold text-lg mb-1 text-foreground">No moments yet</h4>
             <p className="text-xs text-muted-foreground">Be the first to share something with the world!</p>
           </div>
         )}
@@ -204,7 +204,7 @@ export default function MomentsPage() {
 
       <Button 
         onClick={() => router.push('/moments/create')}
-        className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-30 transition-transform active:scale-90"
+        className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-30 transition-transform active:scale-90 text-white"
         size="icon"
       >
         <Plus size={24} />

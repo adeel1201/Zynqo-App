@@ -91,17 +91,17 @@ export default function ProfileSetupPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] p-6 animate-fade-in pb-10">
+    <div className="flex flex-col min-h-screen bg-background p-6 animate-fade-in pb-10">
       <header className="py-4 flex items-center">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground rounded-full">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="text-xl font-headline font-bold ml-2">Complete Profile</h2>
+        <h2 className="text-xl font-headline font-bold ml-2 text-foreground">Complete Profile</h2>
       </header>
 
       <div className="flex-1 mt-6 space-y-8">
         <div className="space-y-2">
-          <h3 className="text-3xl font-headline font-bold flex items-center gap-2">
+          <h3 className="text-3xl font-headline font-bold flex items-center gap-2 text-foreground">
             Personalize <Sparkles className="text-primary" size={24} />
           </h3>
           <p className="text-muted-foreground text-sm">Tell the world a bit about yourself</p>
@@ -109,9 +109,9 @@ export default function ProfileSetupPage() {
 
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <Avatar className="w-32 h-32 border-4 border-primary/20 p-1 bg-white/5">
+            <Avatar className="w-32 h-32 border-4 border-primary/20 p-1 bg-white">
               <AvatarImage src={profilePic || profile?.profilePhoto || ''} />
-              <AvatarFallback className="bg-transparent text-primary/40">
+              <AvatarFallback className="bg-muted text-primary/40">
                 <User size={64} />
               </AvatarFallback>
             </Avatar>
@@ -141,7 +141,7 @@ export default function ProfileSetupPage() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Design enthusiast, traveler, and coffee lover..." 
-              className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4"
+              className="min-h-[120px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 text-foreground"
               required
             />
           </div>
@@ -149,10 +149,10 @@ export default function ProfileSetupPage() {
           <div className="space-y-2">
             <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Location / Country</Label>
             <Select onValueChange={setCountry} value={country}>
-              <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
+              <SelectTrigger className="h-14 bg-muted border-border rounded-2xl focus:ring-primary px-4">
                 <SelectValue placeholder="Select your country" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
+              <SelectContent className="bg-white border-border">
                 {COUNTRIES.map(c => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
@@ -164,7 +164,7 @@ export default function ProfileSetupPage() {
             <Button 
               type="submit"
               disabled={isSubmitting || !bio || !country}
-              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20"
+              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20 text-white"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : "Finish Setup"}
             </Button>

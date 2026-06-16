@@ -71,18 +71,18 @@ export default function StatusViewPage() {
   }, [loading, status, isPaused, router, isExpired]);
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
       <Loader2 className="animate-spin text-primary" size={32} />
     </div>
   );
 
   if (isExpired) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-center p-8 gap-4">
-      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-primary/40">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-8 gap-4">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-primary/40">
         <AlertCircle size={32} />
       </div>
       <div className="space-y-2">
-        <h3 className="text-white font-bold">Status Expired</h3>
+        <h3 className="text-foreground font-bold">Status Expired</h3>
         <p className="text-xs text-muted-foreground">This update is older than 24 hours and is no longer available.</p>
       </div>
       <Button onClick={() => router.push('/status')} variant="outline" className="rounded-2xl mt-4">Go Back</Button>
@@ -90,7 +90,7 @@ export default function StatusViewPage() {
   );
 
   if (!status) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-center p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-6">
       <p className="text-muted-foreground mb-4">Status not found.</p>
       <Button onClick={() => router.push('/status')} variant="outline" className="rounded-2xl">Go Back</Button>
     </div>
@@ -152,7 +152,7 @@ export default function StatusViewPage() {
         {status.mediaType === 'video' ? (
           <video 
             src={status.mediaUrl} 
-            className="w-full h-full object-contain" 
+            className="w-full h-full object-contain cursor-pointer" 
             autoPlay 
             muted={false}
             playsInline

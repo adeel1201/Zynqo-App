@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -116,7 +115,7 @@ export default function CreateChannelPostPage() {
 
   if (channelsLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12]">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Loader2 className="animate-spin text-primary" size={32} />
       </div>
     );
@@ -125,12 +124,12 @@ export default function CreateChannelPostPage() {
   if (myChannels.length === 0) return null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] animate-fade-in pb-10 text-white">
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl safe-top px-4 h-16 flex items-center border-b border-white/5">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white mr-2">
+    <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10 text-foreground">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl safe-top px-4 h-16 flex items-center border-b border-border">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">Create Broadcast</h2>
+        <h2 className="font-bold text-lg text-foreground">Create Broadcast</h2>
       </header>
 
       <form onSubmit={handleUpload} className="p-6 space-y-8">
@@ -138,19 +137,19 @@ export default function CreateChannelPostPage() {
            {!previewUrl ? (
              <div 
                onClick={() => fileInputRef.current?.click()}
-               className="aspect-[9/16] w-full max-w-sm mx-auto flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-[2.5rem] bg-white/5 cursor-pointer hover:bg-white/10 transition-all gap-4"
+               className="aspect-[9/16] w-full max-w-sm mx-auto flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[2.5rem] bg-muted/30 cursor-pointer hover:bg-muted transition-all gap-4 shadow-sm"
              >
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-sm">
                   <Video size={32} />
                 </div>
                 <div className="text-center px-6">
-                  <p className="font-bold text-sm">Tap to add Media</p>
+                  <p className="font-bold text-sm text-foreground">Tap to add Media</p>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">Optional: Video, Image, or Text</p>
                 </div>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="video/*,image/*" className="hidden" />
              </div>
            ) : (
-             <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[2.5rem] overflow-hidden bg-black/40 border border-white/10 shadow-2xl group">
+             <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[2.5rem] overflow-hidden bg-black/5 border border-border shadow-lg group">
                 {selectedFile?.type.startsWith('video/') ? (
                   <video src={previewUrl} className="w-full h-full object-contain" controls />
                 ) : (
@@ -171,15 +170,15 @@ export default function CreateChannelPostPage() {
           <div className="space-y-2">
              <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary">Post To Channel</label>
              <Select value={targetChannelId} onValueChange={setTargetChannelId}>
-                <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
+                <SelectTrigger className="h-14 bg-muted border-border rounded-2xl focus:ring-primary px-4">
                    <SelectValue placeholder="Select channel" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-white/10">
+                <SelectContent className="bg-white border-border">
                    {myChannels.map(c => (
                      <SelectItem key={c.id} value={c.id}>
                         <div className="flex items-center gap-2">
                            <PlayCircle size={14} className="text-primary" />
-                           <span className="font-bold">{c.name}</span>
+                           <span className="font-bold text-foreground">{c.name}</span>
                         </div>
                      </SelectItem>
                    ))}
@@ -193,14 +192,14 @@ export default function CreateChannelPostPage() {
               placeholder="What's on your mind?..." 
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4 text-sm resize-none"
+              className="min-h-[120px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 text-sm resize-none text-foreground"
               required={!selectedFile}
             />
           </div>
 
           {isSubmitting ? (
             <div className="space-y-3">
-              <Progress value={uploadProgress} className="h-2 bg-white/5" />
+              <Progress value={uploadProgress} className="h-2 bg-muted" />
               <p className="text-center text-[10px] font-bold uppercase tracking-widest text-primary animate-pulse">
                 Publishing... {Math.round(uploadProgress)}%
               </p>
@@ -209,7 +208,7 @@ export default function CreateChannelPostPage() {
             <Button 
               type="submit"
               disabled={!selectedFile && !caption.trim()}
-              className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-95"
+              className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-95 text-white"
             >
               <Send size={24} />
               Publish Broadcast

@@ -326,14 +326,14 @@ export default function ChatDetailPage() {
   };
 
   if (chatLoading || messagesLoading) return (
-    <div className="flex flex-col items-center justify-center h-screen bg-[#0E0C12] text-primary">
+    <div className="flex flex-col items-center justify-center h-screen bg-background text-primary">
       <Loader2 className="animate-spin mb-4" size={32} />
       <p className="text-[10px] font-bold uppercase tracking-widest opacity-50">Syncing Messages...</p>
     </div>
   );
 
   if (!chat) return (
-    <div className="flex flex-col items-center justify-center h-screen bg-[#0E0C12] text-muted-foreground p-6 text-center">
+    <div className="flex flex-col items-center justify-center h-screen bg-background text-muted-foreground p-6 text-center">
       <p className="mb-4">Conversation not found.</p>
       <Button onClick={() => router.push('/chats')} variant="outline" className="rounded-2xl border-primary/20 text-primary">
         Back to Chats
@@ -346,10 +346,10 @@ export default function ChatDetailPage() {
   const isTyping = partnerId && chat.typing?.[partnerId];
 
   return (
-    <div className="flex flex-col h-screen bg-[#0E0C12] animate-fade-in relative">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center justify-between border-b border-white/5">
+    <div className="flex flex-col h-screen bg-background animate-fade-in relative">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-white/5 rounded-full">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground hover:bg-muted rounded-full">
             <ChevronLeft size={24} />
           </Button>
           <div className="flex items-center gap-3">
@@ -358,7 +358,7 @@ export default function ChatDetailPage() {
                 <AvatarImage src={partnerProfile?.profilePhoto || `https://picsum.photos/seed/${id}/100/100`} />
                 <AvatarFallback>{partnerName[0]}</AvatarFallback>
               </Avatar>
-              {isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />}
+              {isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />}
             </div>
             <div>
               <h3 className="font-bold text-sm leading-none text-foreground">{partnerName}</h3>
@@ -380,7 +380,7 @@ export default function ChatDetailPage() {
           <Button variant="ghost" size="icon" onClick={() => handleStartCall('video')} className="text-primary hover:bg-primary/10 rounded-full h-10 w-10">
             <Video size={20} />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-white/5 rounded-full h-10 w-10">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted rounded-full h-10 w-10">
             <MoreVertical size={20} />
           </Button>
         </div>
@@ -396,7 +396,7 @@ export default function ChatDetailPage() {
             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in`}>
               <div className={`
                 max-w-[85%] rounded-[1.5rem] shadow-sm overflow-hidden
-                ${isMe ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-card text-foreground rounded-tl-none border border-white/5'}
+                ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-muted/50 text-foreground rounded-tl-none border border-border'}
               `}>
                 {msg.mediaUrl && (
                   <div className="relative">
@@ -417,11 +417,11 @@ export default function ChatDetailPage() {
                       </div>
                     ) : (
                       <div className="p-4 flex items-center gap-3">
-                        <FileIcon size={20} className="text-primary" />
+                        <FileIcon size={20} className={isMe ? "text-white" : "text-primary"} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold truncate">{msg.fileName || 'Shared Document'}</p>
                         </div>
-                        <a href={msg.mediaUrl} download className="text-primary"><Download size={14} /></a>
+                        <a href={msg.mediaUrl} download className={isMe ? "text-white" : "text-primary"}><Download size={14} /></a>
                       </div>
                     )}
                   </div>
@@ -439,7 +439,7 @@ export default function ChatDetailPage() {
         })}
         {isTyping && (
           <div className="flex flex-col items-start animate-fade-in">
-             <div className="bg-card/40 rounded-[1.5rem] rounded-tl-none px-4 py-2 flex items-center gap-1 text-primary">
+             <div className="bg-muted/40 rounded-[1.5rem] rounded-tl-none px-4 py-2 flex items-center gap-1 text-primary">
                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -449,7 +449,7 @@ export default function ChatDetailPage() {
         <div ref={messagesEndRef} className="h-4" />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-[#0E0C12] via-[#0E0C12]/95 to-transparent pt-10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-white via-white/95 to-transparent pt-10">
         {(aiSuggestions.length > 0 || isAiLoading) && (
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-2 px-2 text-primary">
@@ -458,7 +458,7 @@ export default function ChatDetailPage() {
             </div>
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-1">
               {isAiLoading ? (
-                [1,2,3].map(i => <div key={i} className="h-9 w-28 rounded-2xl bg-white/5 animate-pulse" />)
+                [1,2,3].map(i => <div key={i} className="h-9 w-28 rounded-2xl bg-muted animate-pulse" />)
               ) : (
                 aiSuggestions.map((suggestion, i) => (
                   <Button 
@@ -477,16 +477,16 @@ export default function ChatDetailPage() {
           </div>
         )}
 
-        <div className={cn("flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded-[2.5rem] p-2 border border-white/10 shadow-2xl transition-all duration-300", isRecording && "bg-primary/10 border-primary/30")}>
+        <div className={cn("flex items-center gap-2 bg-white/60 backdrop-blur-2xl rounded-[2.5rem] p-2 border border-border shadow-2xl transition-all duration-300", isRecording && "bg-primary/10 border-primary/30")}>
           {isRecording ? (
             <div className="flex-1 flex items-center justify-between px-4">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-sm font-bold">{formatDuration(recordingDuration)}</span>
+                <span className="text-sm font-bold text-foreground">{formatDuration(recordingDuration)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={cancelRecording} className="text-muted-foreground hover:text-red-500 h-10 w-10"><Trash2 size={20} /></Button>
-                <Button onClick={stopRecording} size="icon" className="rounded-full bg-primary h-10 w-10"><Send size={18} /></Button>
+                <Button onClick={stopRecording} size="icon" className="rounded-full bg-primary h-10 w-10 text-white"><Send size={18} /></Button>
               </div>
             </div>
           ) : (
@@ -499,12 +499,12 @@ export default function ChatDetailPage() {
                 type="text" placeholder="Type a message..." value={inputText}
                 onChange={(e) => handleTyping(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium"
+                className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium text-foreground"
               />
               <div className="flex items-center gap-1">
                 {!inputText.trim() && <Button variant="ghost" size="icon" onClick={handleAiAssist} className="text-primary rounded-full h-10 w-10"><Sparkles size={20} /></Button>}
                 {inputText.trim() ? (
-                  <Button onClick={() => handleSend()} size="icon" className="rounded-full bg-primary h-10 w-10"><Send size={18} /></Button>
+                  <Button onClick={() => handleSend()} size="icon" className="rounded-full bg-primary h-10 w-10 text-white"><Send size={18} /></Button>
                 ) : (
                   <Button variant="ghost" size="icon" onClick={startRecording} className="text-muted-foreground rounded-full h-10 w-10"><Mic size={22} /></Button>
                 )}

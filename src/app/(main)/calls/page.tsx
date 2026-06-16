@@ -27,17 +27,17 @@ export default function CallsPage() {
   const { data: calls = [], loading } = useCollection(callsQuery);
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-24">
+    <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-24">
       <AppHeader title="Calls" showSearch={false} />
       
       <div className="p-4 flex flex-col gap-6">
         {/* Create Link */}
-        <div className="flex items-center gap-4 bg-primary/10 p-5 rounded-[2.5rem] border border-primary/20 shadow-xl shadow-primary/5">
+        <div className="flex items-center gap-4 bg-primary/5 p-5 rounded-[2.5rem] border border-primary/10 shadow-sm">
           <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20 shrink-0">
             <Video size={28} />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm">Create Call Link</h3>
+            <h3 className="font-bold text-sm text-foreground">Create Call Link</h3>
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1 opacity-60">Share a link for your Zynqo call</p>
           </div>
         </div>
@@ -52,7 +52,7 @@ export default function CallsPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing History...</p>
             </div>
           ) : calls.length > 0 ? (
-            <div className="flex flex-col divide-y divide-white/5 bg-card/30 rounded-[2.5rem] border border-white/5 overflow-hidden">
+            <div className="flex flex-col divide-y divide-border bg-card rounded-[2.5rem] border border-border overflow-hidden shadow-sm">
               {calls.map((call: any) => {
                 const isCaller = call.callerId === user?.uid;
                 const partnerName = isCaller ? call.receiverName : call.callerName;
@@ -60,13 +60,13 @@ export default function CallsPage() {
                 const date = call.createdAt?.toDate ? call.createdAt.toDate() : new Date();
 
                 return (
-                  <div key={call.id} className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
-                    <Avatar className="w-12 h-12 border border-white/5">
+                  <div key={call.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors">
+                    <Avatar className="w-12 h-12 border border-border">
                       <AvatarImage src={partnerPhoto} />
                       <AvatarFallback>{partnerName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-bold text-sm truncate">{partnerName}</h5>
+                      <h5 className="font-bold text-sm truncate text-foreground">{partnerName}</h5>
                       <div className="flex items-center gap-1.5 mt-1">
                         {call.status === 'missed' ? (
                           <PhoneMissed size={12} className="text-destructive" />
@@ -93,8 +93,8 @@ export default function CallsPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-card/10 rounded-[2.5rem] border border-dashed border-white/5">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-[2.5rem] border border-dashed border-border">
+              <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 shadow-sm">
                 <Phone className="text-muted-foreground opacity-20" size={32} />
               </div>
               <p className="text-xs text-muted-foreground font-medium">No call history found.</p>

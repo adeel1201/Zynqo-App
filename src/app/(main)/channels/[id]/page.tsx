@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -136,22 +135,22 @@ export default function ChannelDetailPage() {
   };
 
   if (channelLoading || postsLoading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12]">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
       <Loader2 className="animate-spin text-primary" size={32} />
       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-4 opacity-50">Syncing Broadcasts...</p>
     </div>
   );
 
   if (!channel) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12] text-center p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-6">
       <p className="text-muted-foreground mb-4">Channel not found.</p>
       <Button onClick={() => router.push('/channels')} variant="outline" className="rounded-2xl">Back to Directory</Button>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#0E0C12] animate-fade-in relative">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center justify-between border-b border-white/5">
+    <div className="flex flex-col h-screen bg-background animate-fade-in relative">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => router.push('/channels')} className="text-muted-foreground">
             <ChevronLeft size={24} />
@@ -162,7 +161,7 @@ export default function ChannelDetailPage() {
               <AvatarFallback><Radio size={20} /></AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-bold text-sm leading-none flex items-center gap-1.5">
+              <h3 className="font-bold text-sm leading-none flex items-center gap-1.5 text-foreground">
                 {channel.name}
                 <ShieldCheck size={14} className="text-primary" />
               </h3>
@@ -184,16 +183,16 @@ export default function ChannelDetailPage() {
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-32">
         {/* Welcome Info */}
-        <div className="flex flex-col items-center text-center py-10 px-6 bg-card/10 rounded-[2.5rem] border border-dashed border-white/5">
+        <div className="flex flex-col items-center text-center py-10 px-6 bg-muted/30 rounded-[2.5rem] border border-dashed border-border">
            <Avatar className="w-20 h-20 mb-4 border-2 border-primary/20 rounded-3xl">
               <AvatarImage src={channel.photo} />
               <AvatarFallback><Radio size={32} /></AvatarFallback>
            </Avatar>
-           <h4 className="text-lg font-bold">{channel.name}</h4>
+           <h4 className="text-lg font-bold text-foreground">{channel.name}</h4>
            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{channel.description || 'Welcome to our official broadcast channel.'}</p>
            <div className="mt-6 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-primary">
               <span className="flex items-center gap-1"><Users size={12} /> {channel.followerIds?.length || 0}</span>
-              <span className="w-1 h-1 bg-white/20 rounded-full" />
+              <span className="w-1 h-1 bg-border rounded-full" />
               <span>Broadcast Channel</span>
            </div>
         </div>
@@ -204,9 +203,9 @@ export default function ChannelDetailPage() {
 
           return (
             <div key={post.id} className="flex flex-col items-start animate-fade-in">
-              <div className="max-w-[90%] bg-card/60 border border-white/5 rounded-2xl rounded-tl-none overflow-hidden shadow-sm">
+              <div className="max-w-[90%] bg-card border border-border rounded-2xl rounded-tl-none overflow-hidden shadow-sm">
                 {post.mediaUrl && (
-                  <div className="relative aspect-video w-full bg-black/40 min-w-[240px]">
+                  <div className="relative aspect-video w-full bg-black/5 min-w-[240px]">
                     {post.mediaType === 'video' ? (
                       <video src={post.mediaUrl} controls className="w-full h-full object-contain" />
                     ) : (
@@ -220,8 +219,8 @@ export default function ChannelDetailPage() {
                   </div>
                 )}
                 <div className="px-4 pb-2 flex items-center justify-end gap-1.5 opacity-40">
-                   <span className="text-[9px] font-bold uppercase tracking-tighter">{time}</span>
-                   <CheckCircle2 size={8} />
+                   <span className="text-[9px] font-bold uppercase tracking-tighter text-foreground">{time}</span>
+                   <CheckCircle2 size={8} className="text-primary" />
                 </div>
               </div>
             </div>
@@ -229,9 +228,9 @@ export default function ChannelDetailPage() {
         })}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-[#0E0C12] via-[#0E0C12] to-transparent pt-10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-white via-white to-transparent pt-10">
         {isAdmin ? (
-          <div className="flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded-[2rem] p-2 border border-white/10 shadow-2xl">
+          <div className="flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded-[2rem] p-2 border border-border shadow-2xl">
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,video/*" />
             <Button 
               variant="ghost" size="icon" disabled={isUploading}
@@ -244,7 +243,7 @@ export default function ChannelDetailPage() {
               type="text" placeholder="Broadcast a message..." value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handlePost())}
-              className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium"
+              className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium text-foreground"
             />
             <Button 
               onClick={() => handlePost()} 
@@ -258,7 +257,7 @@ export default function ChannelDetailPage() {
         ) : (
           <Button 
             onClick={handleJoinLeave}
-            className={`w-full h-14 rounded-2xl font-bold text-lg shadow-xl transition-all ${isFollowing ? 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive' : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'}`}
+            className={`w-full h-14 rounded-2xl font-bold text-lg shadow-xl transition-all ${isFollowing ? 'bg-muted border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive' : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'}`}
           >
             {isFollowing ? 'Leave Channel' : 'Join Channel'}
           </Button>
