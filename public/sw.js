@@ -1,10 +1,9 @@
+// Zynqo Service Worker
 const CACHE_NAME = 'zynqo-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -16,16 +15,11 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
-      );
-    })
-  );
+  event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
+  // Required fetch handler for PWA installability
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
