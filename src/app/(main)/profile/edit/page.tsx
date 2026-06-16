@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth as useZynqoAuth } from '@/context/AuthContext';
 import { useFirestore, useStorage } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, Camera, Loader2, Save, AtSign, Globe } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ChevronLeft, Camera, Loader2, Save, AtSign, Globe, Ghost } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 
@@ -32,7 +34,8 @@ export default function EditProfilePage() {
     displayName: '',
     username: '',
     bio: '',
-    country: ''
+    country: '',
+    hideLocation: false
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -46,7 +49,8 @@ export default function EditProfilePage() {
         displayName: profile.displayName || '',
         username: profile.username || '',
         bio: profile.bio || '',
-        country: profile.country || ''
+        country: profile.country || '',
+        hideLocation: profile.hideLocation || false
       });
     }
   }, [profile]);
@@ -96,13 +100,23 @@ export default function EditProfilePage() {
     setIsSaving(true);
     try {
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      
+      const updatePayload: any = {
         displayName: formData.displayName,
         username: formData.username.toLowerCase().trim(),
         bio: formData.bio,
         country: formData.country,
+        hideLocation: formData.hideLocation,
         updatedAt: new Date()
-      });
+      };
+
+      // If enabling Ghost Mode, clear location data
+      if (formData.hideLocation) {
+        updatePayload.latitude = deleteField();
+        updatePayload.longitude = deleteField();
+      }
+
+      await updateDoc(userRef, updatePayload);
       toast({ title: "Profile saved successfully" });
       router.back();
     } catch (error: any) {
@@ -160,56 +174,77 @@ export default function EditProfilePage() {
           )}
         </div>
 
-        <form onSubmit={handleSave} className="space-y-6">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Full Name</Label>
-            <Input 
-              value={formData.displayName}
-              onChange={(e) => setFormData(p => ({ ...p, displayName: e.target.value }))}
-              placeholder="Your full name" 
-              className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
-            />
+        <form onSubmit={handleSave} className="space-y-8">
+          {/* Privacy Section */}
+          <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-5 space-y-4">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+                      <Ghost size={20} />
+                   </div>
+                   <div>
+                      <h4 className="text-sm font-bold">Ghost Mode</h4>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Hide location from discovery</p>
+                   </div>
+                </div>
+                <Switch 
+                  checked={formData.hideLocation} 
+                  onCheckedChange={(val) => setFormData(p => ({ ...p, hideLocation: val }))} 
+                />
+             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Username</Label>
-            <div className="relative">
-              <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Full Name</Label>
               <Input 
-                value={formData.username}
-                onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
-                placeholder="username" 
-                className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+                value={formData.displayName}
+                onChange={(e) => setFormData(p => ({ ...p, displayName: e.target.value }))}
+                placeholder="Your full name" 
+                className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Country</Label>
-            <Select 
-              value={formData.country} 
-              onValueChange={(val) => setFormData(p => ({ ...p, country: val }))}
-            >
-              <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
-                <div className="flex items-center gap-2">
-                  <Globe size={16} className="text-muted-foreground" />
-                  <SelectValue placeholder="Where are you from?" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
-                {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Username</Label>
+              <div className="relative">
+                <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <Input 
+                  value={formData.username}
+                  onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
+                  placeholder="username" 
+                  className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
+                />
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Bio</Label>
-            <Textarea 
-              value={formData.bio}
-              onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
-              placeholder="Tell us something interesting..." 
-              className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4"
-            />
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Country</Label>
+              <Select 
+                value={formData.country} 
+                onValueChange={(val) => setFormData(p => ({ ...p, country: val }))}
+              >
+                <SelectTrigger className="h-14 bg-white/5 border-white/5 rounded-2xl focus:ring-primary px-4">
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} className="text-muted-foreground" />
+                    <SelectValue placeholder="Where are you from?" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-card border-white/10">
+                  {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Bio</Label>
+              <Textarea 
+                value={formData.bio}
+                onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
+                placeholder="Tell us something interesting..." 
+                className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4"
+              />
+            </div>
           </div>
 
           <div className="pt-4">

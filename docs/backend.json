@@ -92,7 +92,9 @@
         "followerIds": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },
-        "lastPost": { "type": "object" }
+        "lastPost": { "type": "object" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
       },
       "required": ["name", "adminIds", "type", "createdAt"]
     },
@@ -108,6 +110,24 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["content", "authorId", "timestamp"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with discovery settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "profilePhoto": { "type": "string" },
+        "bio": { "type": "string" },
+        "country": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "hideLocation": { "type": "boolean" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "onlineStatus": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -116,6 +136,10 @@
     ]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Global user directory."
+    },
     "/moments/{momentId}": {
       "schema": "Moment",
       "description": "Collection of social moments shared by users."
