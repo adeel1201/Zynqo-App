@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
@@ -18,7 +19,8 @@ import {
   QrCode,
   Loader2,
   MapPin,
-  Calendar
+  Calendar,
+  ChevronRight
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -136,20 +138,24 @@ export default function ProfilePage() {
         )}
 
         <div className="space-y-3">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Account Settings</h4>
+          <div className="flex items-center justify-between px-2">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">General Settings</h4>
+            <Link href="/settings">
+              <span className="text-[10px] text-primary font-black uppercase tracking-widest">Manage All</span>
+            </Link>
+          </div>
           <div className="bg-card/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
-            <ProfileMenuItem icon={User} label="Personal Information" />
-            <ProfileMenuItem icon={Globe} label="Privacy & Visibility" />
-            <ProfileMenuItem icon={Lock} label="Security & Verification" />
+            <ProfileMenuItem icon={Settings} label="Application Settings" href="/settings" />
+            <ProfileMenuItem icon={Globe} label="Privacy & Visibility" href="/settings/privacy" />
+            <ProfileMenuItem icon={Bell} label="Notifications" href="/settings/notifications" />
           </div>
         </div>
 
         <div className="space-y-3">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">App Support</h4>
           <div className="bg-card/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
-            <ProfileMenuItem icon={Bell} label="Notifications" />
-            <ProfileMenuItem icon={Database} label="Data & Storage" />
-            <ProfileMenuItem icon={HelpCircle} label="Help & Support" />
+            <ProfileMenuItem icon={HelpCircle} label="Help & Support" href="#" />
+            <ProfileMenuItem icon={Database} label="Data & Storage" href="/settings/data" />
           </div>
         </div>
 
@@ -166,16 +172,16 @@ export default function ProfilePage() {
   );
 }
 
-function ProfileMenuItem({ icon: Icon, label }: { icon: any, label: string }) {
+function ProfileMenuItem({ icon: Icon, label, href }: { icon: any, label: string, href: string }) {
   return (
-    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-none">
+    <Link href={href} className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-none">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary/80">
           <Icon size={20} />
         </div>
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <span className="text-muted-foreground text-lg opacity-30">›</span>
-    </button>
+      <ChevronRight size={16} className="text-muted-foreground/30" />
+    </Link>
   );
 }

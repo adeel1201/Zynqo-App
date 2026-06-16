@@ -113,7 +113,7 @@
     },
     "User": {
       "title": "User",
-      "description": "User profile with discovery settings.",
+      "description": "User profile with discovery settings and application preferences.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
@@ -126,7 +126,31 @@
         "longitude": { "type": "number" },
         "hideLocation": { "type": "boolean" },
         "lastSeen": { "type": "string", "format": "date-time" },
-        "onlineStatus": { "type": "string" }
+        "onlineStatus": { "type": "string" },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string", "enum": ["dark", "light", "system"] },
+            "language": { "type": "string" },
+            "notifications": {
+              "type": "object",
+              "properties": {
+                "messages": { "type": "boolean" },
+                "calls": { "type": "boolean" },
+                "moments": { "type": "boolean" },
+                "channels": { "type": "boolean" }
+              }
+            },
+            "privacy": {
+              "type": "object",
+              "properties": {
+                "blockedUserIds": { "type": "array", "items": { "type": "string" } },
+                "mutedChatIds": { "type": "array", "items": { "type": "string" } },
+                "readReceipts": { "type": "boolean" }
+              }
+            }
+          }
+        }
       }
     }
   },
