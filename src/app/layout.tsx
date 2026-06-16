@@ -1,4 +1,3 @@
-
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
@@ -7,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import Script from 'next/script';
 
 export const viewport: Viewport = {
-  themeColor: '#6A0DAD',
+  themeColor: '#7B5AFF',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
