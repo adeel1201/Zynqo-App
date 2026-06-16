@@ -32,9 +32,8 @@ export default function ChatsPage() {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   // Load real chats from Firestore where current user is a participant
-  // Guard with user check to prevent permission errors during auth loading
   const chatsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return query(
       collection(db, 'chats'),
       where('participantIds', 'array-contains', user.uid),
@@ -45,9 +44,8 @@ export default function ChatsPage() {
   const { data: chats = [], loading: chatsLoading } = useCollection(chatsQuery);
 
   // Load all users to get their presence status
-  // Guard with user check as Zynqo rules require auth for reading users
   const usersQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return query(collection(db, 'users'), orderBy('displayName', 'asc'));
   }, [db, user?.uid]);
 

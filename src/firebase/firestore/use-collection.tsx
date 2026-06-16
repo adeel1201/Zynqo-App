@@ -28,8 +28,13 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
         setLoading(false);
       },
       async (serverError) => {
-        // Attempt to extract path from query if it's a CollectionReference
-        const path = (q as any).path || (q as any)._query?.path?.toString() || 'collection_query';
+        // Improved path extraction for Query objects to help with debugging
+        let path = 'collection_query';
+        if ((q as any).path) {
+          path = (q as any).path;
+        } else if ((q as any)._query?.path?.segments) {
+          path = (q as any)._query.path.segments.join('/');
+        }
         
         const permissionError = new FirestorePermissionError({
           path: path,
