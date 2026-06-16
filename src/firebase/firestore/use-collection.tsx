@@ -18,8 +18,8 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
 
   useEffect(() => {
     // Guard: Ensure we have a query and that the Auth SDK is actually ready with a user
-    // to prevent the race condition where Firestore sends an unauthenticated request
-    // just as the component re-renders with the user object from context.
+    // to prevent the race condition where Firestore sends an unauthenticated request.
+    // auth.currentUser is the source of truth for the SDK's internal token state.
     if (!q || !auth?.currentUser) {
       if (!q) setLoading(false);
       return;
@@ -33,16 +33,11 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
         setLoading(false);
       },
       async (serverError) => {
-        // Improved path extraction for Query objects to help with debugging
+        // Attempt to extract the path for debugging, handling both Ref and Query objects
         let path = 'collection_query';
         try {
-          if ((q as any).path) {
-            path = (q as any).path;
-          } else if ((q as any)._query?.path?.segments) {
-            path = (q as any)._query.path.segments.join('/');
-          } else if ((q as any).endpoint?.path?.segments) {
-            path = (q as any).endpoint.path.segments.join('/');
-          }
+          // @ts-ignore - access internal path if available
+          path = q.path || (q as any)._query?.path?.segments?.join('/') || 'collection_query';
         } catch (e) {
           // Path resolution failed
         }
@@ -57,7 +52,7 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     );
 
     return unsubscribe;
-  }, [q, auth?.currentUser?.uid]); // Re-run if query changes or internal auth state updates
+  }, [q, auth?.currentUser?.uid]); // Re-run when query or auth state changes
 
   return { data, loading };
 }
