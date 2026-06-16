@@ -4,14 +4,18 @@ import { useState, useEffect } from 'react';
 import { DocumentReference, onSnapshot, DocumentData } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
+import { useAuth } from '../provider';
 
 export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+  const auth = useAuth();
 
   useEffect(() => {
-    if (!ref) {
-      setLoading(false);
+    // Guard: Ensure we have a ref and the Auth SDK has initialized the currentUser
+    // to avoid unauthenticated requests during the transition state.
+    if (!ref || !auth?.currentUser) {
+      if (!ref) setLoading(false);
       return;
     }
 
@@ -32,7 +36,7 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
     );
 
     return unsubscribe;
-  }, [ref?.path]);
+  }, [ref?.path, auth?.currentUser?.uid]);
 
   return { data, loading };
 }

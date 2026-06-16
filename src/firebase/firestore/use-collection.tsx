@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Query, onSnapshot, DocumentData, CollectionReference } from 'firebase/firestore';
+import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
+import { useAuth } from '../provider';
 
 /**
  * Custom hook to subscribe to a Firestore collection query.
@@ -13,10 +14,14 @@ import { FirestorePermissionError } from '../errors';
 export function useCollection<T = DocumentData>(q: Query<T> | null) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
+  const auth = useAuth();
 
   useEffect(() => {
-    if (!q) {
-      setLoading(false);
+    // Guard: Ensure we have a query and that the Auth SDK is actually ready with a user
+    // to prevent the race condition where Firestore sends an unauthenticated request
+    // just as the component re-renders with the user object from context.
+    if (!q || !auth?.currentUser) {
+      if (!q) setLoading(false);
       return;
     }
 
@@ -30,10 +35,16 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
       async (serverError) => {
         // Improved path extraction for Query objects to help with debugging
         let path = 'collection_query';
-        if ((q as any).path) {
-          path = (q as any).path;
-        } else if ((q as any)._query?.path?.segments) {
-          path = (q as any)._query.path.segments.join('/');
+        try {
+          if ((q as any).path) {
+            path = (q as any).path;
+          } else if ((q as any)._query?.path?.segments) {
+            path = (q as any)._query.path.segments.join('/');
+          } else if ((q as any).endpoint?.path?.segments) {
+            path = (q as any).endpoint.path.segments.join('/');
+          }
+        } catch (e) {
+          // Path resolution failed
         }
         
         const permissionError = new FirestorePermissionError({
@@ -46,7 +57,7 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     );
 
     return unsubscribe;
-  }, [q]);
+  }, [q, auth?.currentUser?.uid]); // Re-run if query changes or internal auth state updates
 
   return { data, loading };
 }
