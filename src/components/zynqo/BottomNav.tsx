@@ -1,15 +1,15 @@
 
 "use client";
 
-import Link from 'next/link';
+import Link from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { MessageSquare, CircleDot, LayoutGrid, Compass, User, Radio, MapPin } from 'lucide-react';
+import { MessageSquare, CircleDot, PlayCircle, LayoutGrid, Compass, User, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { icon: MessageSquare, label: 'Chats', path: '/chats' },
   { icon: CircleDot, label: 'Status', path: '/status' },
-  { icon: Radio, label: 'Channels', path: '/channels' },
+  { icon: PlayCircle, label: 'Channels', path: '/v-channels' },
   { icon: MapPin, label: 'Nearby', path: '/nearby' },
   { icon: LayoutGrid, label: 'Moments', path: '/moments' },
   { icon: Compass, label: 'Discover', path: '/discover' },
@@ -27,7 +27,7 @@ export function BottomNav() {
           const Icon = item.icon;
 
           return (
-            <Link 
+            <a 
               key={item.path} 
               href={item.path}
               className={cn(
@@ -45,7 +45,7 @@ export function BottomNav() {
               {isActive && (
                 <div className="absolute -top-1 w-1 h-1 rounded-full bg-primary" />
               )}
-            </Link>
+            </a>
           );
         })}
       </div>

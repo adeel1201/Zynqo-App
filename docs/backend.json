@@ -111,6 +111,42 @@
       },
       "required": ["content", "authorId", "timestamp"]
     },
+    "CreatorChannel": {
+      "title": "CreatorChannel",
+      "description": "A public content creator profile for Video Channels.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatar": { "type": "string" },
+        "banner": { "type": "string" },
+        "category": { "type": "string" },
+        "followerIds": { "type": "array", "items": { "type": "string" } },
+        "isVerified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "name", "username"]
+    },
+    "CreatorPost": {
+      "title": "CreatorPost",
+      "description": "A short video or photo post by a creator.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorAvatar": { "type": "string" },
+        "type": { "type": "string", "enum": ["video", "image"] },
+        "mediaUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "likes": { "type": "array", "items": { "type": "string" } },
+        "commentsCount": { "type": "number" },
+        "sharesCount": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "type", "mediaUrl", "timestamp"]
+    },
     "SecurityLog": {
       "title": "SecurityLog",
       "description": "A record of security-related events for a user.",
@@ -215,6 +251,14 @@
     "/channels/{channelId}/posts/{postId}": {
       "schema": "ChannelPost",
       "description": "Posts within a channel."
+    },
+    "/creatorChannels/{channelId}": {
+      "schema": "CreatorChannel",
+      "description": "Public content creator channels."
+    },
+    "/creatorPosts/{postId}": {
+      "schema": "CreatorPost",
+      "description": "Social content posts (video/image) in Video Channels."
     }
   }
 }

@@ -27,7 +27,7 @@ service cloud.firestore {
 
       match /securityLogs/{logId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId); // App logs on behalf of user
+        allow create: if isOwner(userId);
       }
 
       match /devices/{deviceId} {
@@ -35,16 +35,38 @@ service cloud.firestore {
       }
     }
 
-    // Chats collection
-    match /chats/{chatId} {
-      allow read: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
+    // Creator Channels (WeChat Style)
+    match /creatorChannels/{channelId} {
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
+      allow update: if isAuthenticated() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerIds']));
+      allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
+    }
+
+    match /creatorPosts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated(); // For likes/comments count
+      allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
       
-      match /messages/{messageId} {
+      match /comments/{commentId} {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated();
-        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/creatorPosts/$(postId)).data.creatorId == request.auth.uid);
+      }
+    }
+
+    // Broadcast Channels
+    match /channels/{channelId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (request.auth.uid in resource.data.adminIds || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerIds']));
+      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.adminIds);
+
+      match /posts/{postId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin(channelId);
+        allow delete: if isAdmin(channelId);
       }
     }
 
@@ -60,35 +82,6 @@ service cloud.firestore {
         allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
         allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
       }
-    }
-
-    // Channels collection
-    match /channels/{channelId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (request.auth.uid in resource.data.adminIds || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerIds']));
-      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.adminIds);
-
-      match /posts/{postId} {
-        allow read: if isAuthenticated();
-        allow create: if isAdmin(channelId);
-        allow delete: if isAdmin(channelId);
-      }
-    }
-
-    // Statuses
-    match /statuses/{statusId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-    }
-
-    // Calls
-    match /calls/{callId} {
-      allow read: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
     }
 
     match /{document=**} {
