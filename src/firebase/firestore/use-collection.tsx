@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Query, onSnapshot, DocumentData, CollectionReference } from 'firebase/firestore';
+import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 import { useAuth } from '../provider';
@@ -17,55 +18,47 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
   const auth = useAuth();
 
   useEffect(() => {
-    // Attempt to extract the path for debugging, handling both Ref and Query objects
+    // Attempt to extract the path for debugging
     let path = 'unknown_query';
-    let collectionName = 'unknown_collection';
     try {
-      // @ts-ignore - access internal path/segments if available
+      // Access internal path segments if available (reliable for both Ref and Query)
       path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'unknown_query';
-      collectionName = path.split('/').pop() || 'unknown_collection';
     } catch (e) {}
 
-    // Debugging logs as requested
-    console.log(`[Firestore Query] Initiating useCollection subscription:`, {
-      collectionName,
+    // Debugging logs to pinpoint auth race conditions
+    console.log(`[Firestore Query] useCollection sub:`, {
       path,
       currentUserUid: auth?.currentUser?.uid || 'NONE',
       authCurrentUserExists: !!auth?.currentUser
     });
 
-    // Guard: Ensure we have a query and that the Auth SDK is actually ready with a user
-    // to prevent the race condition where Firestore sends an unauthenticated request.
+    // Guard: Do not initiate a subscription if there is no query or NO authenticated user.
+    // This prevents "Missing or insufficient permissions" during the auth handshake.
     if (!q || !auth?.currentUser) {
-      if (!q) {
-        console.log(`[Firestore Query] Aborting useCollection: No query provided.`);
-        setLoading(false);
-      } else {
-        console.log(`[Firestore Query] Waiting for Auth SDK synchronization...`);
-      }
+      if (!q) setLoading(false);
       return;
     }
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        console.log(`[Firestore Query] Success: Received ${snapshot.docs.length} docs from ${path}`);
+        console.log(`[Firestore Query] Success: ${path}`);
         const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
         setData(results);
         setLoading(false);
       },
       async (serverError) => {
-        console.error(`[Firestore Query] FAILED: ${serverError.message}`, {
-          path,
-          operation: 'list',
-          uid: auth?.currentUser?.uid
-        });
+        console.error(`[Firestore Query] FAILED: ${serverError.message}`, { path });
 
-        const permissionError = new FirestorePermissionError({
-          path: path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        // Only emit permission error if we actually have a user, 
+        // otherwise it's just a transient auth transition state.
+        if (auth?.currentUser) {
+          const permissionError = new FirestorePermissionError({
+            path: path,
+            operation: 'list',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
         setLoading(false);
       }
     );

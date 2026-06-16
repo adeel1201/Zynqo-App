@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,46 +14,36 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
 
   useEffect(() => {
     const path = ref?.path || 'unknown_doc';
-    const collectionName = path.split('/')[0] || 'unknown_collection';
 
-    // Debugging logs as requested
-    console.log(`[Firestore Query] Initiating useDoc subscription:`, {
-      collectionName,
+    console.log(`[Firestore Query] useDoc sub:`, {
       path,
       currentUserUid: auth?.currentUser?.uid || 'NONE',
       authCurrentUserExists: !!auth?.currentUser
     });
 
-    // Guard: Ensure we have a ref and the Auth SDK has initialized the currentUser
+    // Guard: Wait for both the reference and a truly authenticated user session.
     if (!ref || !auth?.currentUser) {
-      if (!ref) {
-        console.log(`[Firestore Query] Aborting useDoc: No reference provided.`);
-        setLoading(false);
-      } else {
-        console.log(`[Firestore Query] Waiting for Auth SDK synchronization for ${path}...`);
-      }
+      if (!ref) setLoading(false);
       return;
     }
 
     const unsubscribe = onSnapshot(
       ref,
       (doc) => {
-        console.log(`[Firestore Query] Success: Received doc from ${path}`);
+        console.log(`[Firestore Query] Success: ${path}`);
         setData(doc.exists() ? { id: doc.id, ...doc.data() } as any : null);
         setLoading(false);
       },
       async (error) => {
-        console.error(`[Firestore Query] FAILED: ${error.message}`, {
-          path,
-          operation: 'get',
-          uid: auth?.currentUser?.uid
-        });
+        console.error(`[Firestore Query] FAILED: ${error.message}`, { path });
 
-        const permissionError = new FirestorePermissionError({
-          path: ref.path,
-          operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        if (auth?.currentUser) {
+          const permissionError = new FirestorePermissionError({
+            path: ref.path,
+            operation: 'get',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
         setLoading(false);
       }
     );
