@@ -5,7 +5,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useStorage } from '@/firebase';
-import { doc, setDoc, serverTimestamp, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +72,7 @@ export default function SetupChannelPage() {
         setIsUploading(false);
       }
 
-      // WeChat style: Can have multiple channels, so we use auto ID or specific handle ID
+      // WeChat style: Save as a dedicated channel document
       const channelsRef = collection(db, 'creatorChannels');
       const docRef = await addDoc(channelsRef, {
         creatorId: user.uid,
@@ -89,10 +89,10 @@ export default function SetupChannelPage() {
         updatedAt: serverTimestamp()
       });
 
-      toast({ title: "Channel Created!", description: "Your unique broadcast space is ready." });
+      toast({ title: "Channel Created!", description: "Your specialized broadcast space is ready." });
       router.push(`/v-channels/${docRef.id}`);
     } catch (error: any) {
-      toast({ title: "Failed to create channel", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +104,7 @@ export default function SetupChannelPage() {
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground mr-2">
           <ChevronLeft size={24} />
         </Button>
-        <h2 className="font-bold text-lg">New Channel</h2>
+        <h2 className="font-bold text-lg">Create Channel</h2>
       </header>
 
       <div className="p-6 space-y-8">
@@ -113,8 +113,8 @@ export default function SetupChannelPage() {
             <Sparkles size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-2xl font-headline font-bold">Establish Your Presence</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed px-4">Create a specialized channel for your broadcasts.</p>
+            <h3 className="text-2xl font-headline font-bold">New Broadcast Presence</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed px-4">Define how you appear in the video channels feed.</p>
           </div>
         </div>
 
@@ -152,14 +152,14 @@ export default function SetupChannelPage() {
             <Input 
               value={formData.name}
               onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-              placeholder="e.g., Midnight Moods"
+              placeholder="e.g., Tech Insights"
               className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Unique Handle</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Handle (Username)</Label>
             <Input 
               value={formData.username}
               onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
@@ -181,7 +181,7 @@ export default function SetupChannelPage() {
                     <Globe size={16} className="text-primary" />
                     <div className="flex flex-col">
                       <span className="font-bold">Public</span>
-                      <span className="text-[8px] text-muted-foreground uppercase">Everyone can watch and discover</span>
+                      <span className="text-[8px] text-muted-foreground">Visible to everyone</span>
                     </div>
                   </div>
                 </SelectItem>
@@ -190,7 +190,7 @@ export default function SetupChannelPage() {
                     <Lock size={16} className="text-yellow-500" />
                     <div className="flex flex-col">
                       <span className="font-bold">Private</span>
-                      <span className="text-[8px] text-muted-foreground uppercase">Only followers can watch content</span>
+                      <span className="text-[8px] text-muted-foreground">Only followers can view</span>
                     </div>
                   </div>
                 </SelectItem>
@@ -199,7 +199,7 @@ export default function SetupChannelPage() {
                     <EyeOff size={16} className="text-muted-foreground" />
                     <div className="flex flex-col">
                       <span className="font-bold">Hidden</span>
-                      <span className="text-[8px] text-muted-foreground uppercase">Not discoverable in search or feeds</span>
+                      <span className="text-[8px] text-muted-foreground">Direct link only</span>
                     </div>
                   </div>
                 </SelectItem>
@@ -212,7 +212,7 @@ export default function SetupChannelPage() {
             <Textarea 
               value={formData.bio}
               onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
-              placeholder="What will you broadcast?" 
+              placeholder="Tell your audience what to expect..." 
               className="min-h-[100px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4 resize-none"
             />
           </div>
@@ -226,7 +226,7 @@ export default function SetupChannelPage() {
               {isLoading ? <Loader2 className="animate-spin" /> : (
                 <>
                   <Sparkles size={20} />
-                  Establish Channel
+                  Start Broadcasting
                 </>
               )}
             </Button>

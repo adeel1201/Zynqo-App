@@ -35,7 +35,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Fetch my channels
+  // Fetch my channels from creatorChannels collection
   const myChannelsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(collection(db, 'creatorChannels'), where('creatorId', '==', user.uid));
@@ -68,8 +68,8 @@ export default function ProfilePage() {
   const handleCreateChannel = () => {
     if (myChannels.length >= 3) {
       toast({ 
-        title: "Channel Limit Reached", 
-        description: "You can create up to 3 channels per account.",
+        title: "Limit Reached", 
+        description: "You can only own up to 3 channels.",
         variant: "destructive"
       });
       return;
@@ -87,7 +87,7 @@ export default function ProfilePage() {
     <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-24">
       <AppHeader title="Me" showActions={false} showSearch={false} />
       
-      {/* Personal Account Header */}
+      {/* Profile Header */}
       <div className="p-6 flex items-center gap-4 bg-card/20 border-b border-white/5">
         <div className="relative">
           <Avatar className="w-20 h-20 border-2 border-primary/20 shadow-xl">
@@ -111,11 +111,11 @@ export default function ProfilePage() {
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Creator Section */}
+        {/* Content Creator Section */}
         <section className="space-y-3">
           <div className="flex items-center justify-between ml-2">
             <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
-            <span className="text-[10px] font-black text-primary/40">{myChannels.length}/3 Channels</span>
+            <span className="text-[9px] font-black text-primary/40">{myChannels.length}/3 Channels</span>
           </div>
           <div className="bg-card/40 rounded-[2rem] border border-white/5 overflow-hidden">
             {channelsLoading ? (
@@ -135,7 +135,7 @@ export default function ProfilePage() {
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="text-sm font-bold">{channel.name}</span>
-                        <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-1.5">
+                        <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-1.5 capitalize">
                            {channel.privacy || 'public'} channel
                         </span>
                       </div>
@@ -157,7 +157,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold">Create Video Channel</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Start sharing broadcasts</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground/30" />
@@ -166,22 +166,14 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Account & Security */}
+        {/* Regular Settings */}
         <section className="space-y-3">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Personal Settings</h4>
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
           <div className="bg-card/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
-            <ProfileMenuItem icon={Settings} label="Application Settings" href="/settings" />
-            <ProfileMenuItem icon={Globe} label="Privacy & Visibility" href="/settings/privacy" />
+            <ProfileMenuItem icon={Settings} label="App Settings" href="/settings" />
+            <ProfileMenuItem icon={Globe} label="Privacy Settings" href="/settings/privacy" />
             <ProfileMenuItem icon={Bell} label="Notifications" href="/settings/notifications" />
-            <ProfileMenuItem icon={Lock} label="Security & Account" href="/settings/security" />
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Support</h4>
-          <div className="bg-card/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
-            <ProfileMenuItem icon={HelpCircle} label="Help & Support" href="#" />
-            <ProfileMenuItem icon={Database} label="Data & Storage" href="/settings/data" />
+            <ProfileMenuItem icon={Lock} label="Security" href="/settings/security" />
           </div>
         </section>
 
@@ -189,13 +181,13 @@ export default function ProfilePage() {
           <Button 
             variant="ghost" 
             onClick={handleSignOut}
-            className="w-full h-14 rounded-[2rem] bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border border-destructive/10 shadow-xl shadow-destructive/5"
+            className="w-full h-14 rounded-[2rem] bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border border-destructive/10"
           >
             <LogOut size={20} />
             Sign Out
           </Button>
           <p className="text-center text-[9px] text-muted-foreground mt-6 font-bold uppercase tracking-[0.3em] opacity-40">
-            Zynqo Amethyst v1.2.0 • Joined {formatJoinedDate(profile.createdAt)}
+            Zynqo • Member since {formatJoinedDate(profile.createdAt)}
           </p>
         </div>
       </div>
