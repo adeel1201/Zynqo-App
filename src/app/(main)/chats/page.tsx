@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
@@ -33,6 +32,7 @@ export default function ChatsPage() {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   // Load real chats from Firestore where current user is a participant
+  // Guard with user check to prevent permission errors during auth loading
   const chatsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -45,10 +45,11 @@ export default function ChatsPage() {
   const { data: chats = [], loading: chatsLoading } = useCollection(chatsQuery);
 
   // Load all users to get their presence status
+  // Guard with user check as Zynqo rules require auth for reading users
   const usersQuery = useMemoFirebase(() => {
-    if (!db) return null;
+    if (!db || !user) return null;
     return query(collection(db, 'users'), orderBy('displayName', 'asc'));
-  }, [db]);
+  }, [db, user?.uid]);
 
   const { data: allUsers = [] } = useCollection(usersQuery);
 
@@ -87,7 +88,6 @@ export default function ChatsPage() {
   const startNewChat = async (targetUser: any) => {
     if (!user || !db) return;
 
-    // Check if a 1:1 chat already exists with this user
     const existingChat = chats.find((c: any) => 
       c.type !== 'group' && c.participantIds?.length === 2 && c.participantIds.includes(targetUser.uid)
     );
@@ -147,7 +147,6 @@ export default function ChatsPage() {
         onSearchClick={() => setIsSearching(true)}
       />
       
-      {/* Search Bar Overlay */}
       {isSearching && (
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md px-4 py-3 flex items-center gap-2 border-b border-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="relative flex-1">
@@ -178,7 +177,6 @@ export default function ChatsPage() {
         </div>
       )}
 
-      {/* Chat List */}
       <div className="flex flex-col divide-y divide-white/5">
         {chatsLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -279,7 +277,6 @@ export default function ChatsPage() {
         )}
       </div>
 
-      {/* Floating Action Button with New Chat Options */}
       {!isSearching && (
         <Dialog open={isNewChatOpen} onOpenChange={(open) => {
           setIsNewChatOpen(open);

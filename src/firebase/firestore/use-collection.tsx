@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
+import { Query, onSnapshot, DocumentData, CollectionReference } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
@@ -29,8 +28,11 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
         setLoading(false);
       },
       async (serverError) => {
+        // Attempt to extract path from query if it's a CollectionReference
+        const path = (q as any).path || (q as any)._query?.path?.toString() || 'collection_query';
+        
         const permissionError = new FirestorePermissionError({
-          path: 'collection_query',
+          path: path,
           operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
@@ -39,7 +41,7 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     );
 
     return unsubscribe;
-  }, [q]); // Removed JSON.stringify as Query objects are complex and can't be stringified easily
+  }, [q]);
 
   return { data, loading };
 }

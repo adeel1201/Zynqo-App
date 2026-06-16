@@ -69,24 +69,24 @@ export default function ChatDetailPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load chat metadata
-  const chatRef = useMemoFirebase(() => id ? doc(db, 'chats', id as string) : null, [db, id]);
+  // Guard all Firebase references with 'user' to avoid permission errors during session load
+  const chatRef = useMemoFirebase(() => (id && user) ? doc(db, 'chats', id as string) : null, [db, id, user?.uid]);
   const { data: chat, loading: chatLoading } = useDoc(chatRef);
 
-  // Load messages
+  // Load messages - Guarded by user
   const messagesQuery = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db || !id || !user) return null;
     return query(
       collection(db, 'chats', id as string, 'messages'),
       orderBy('timestamp', 'asc')
     );
-  }, [db, id]);
+  }, [db, id, user?.uid]);
 
   const { data: messages = [], loading: messagesLoading } = useCollection(messagesQuery);
 
   // Presence lookup for partner
   const partnerId = useMemo(() => chat?.participantIds?.find((uid: string) => uid !== user?.uid), [chat, user?.uid]);
-  const partnerRef = useMemoFirebase(() => partnerId ? doc(db, 'users', partnerId) : null, [db, partnerId]);
+  const partnerRef = useMemoFirebase(() => (partnerId && user) ? doc(db, 'users', partnerId) : null, [db, partnerId, user?.uid]);
   const { data: partnerProfile } = useDoc(partnerRef);
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
@@ -190,7 +190,6 @@ export default function ChatDetailPage() {
     );
   };
 
-  // Voice recording logic
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -236,7 +235,7 @@ export default function ChatDetailPage() {
   const cancelRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      audioChunksRef.current = []; // Clear chunks so onstop doesn't upload
+      audioChunksRef.current = [];
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
       setRecordingDuration(0);
@@ -396,7 +395,6 @@ export default function ChatDetailPage() {
                           alt="Shared Image" 
                           fill 
                           className="object-cover"
-                          data-ai-hint="shared image"
                         />
                       </div>
                     ) : msg.mediaType === 'video' ? (
