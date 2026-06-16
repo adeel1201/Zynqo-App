@@ -15,17 +15,13 @@ export default function StatusPage() {
   const db = useFirestore();
   const router = useRouter();
 
-  // Load actual status updates from last 24 hours
-  const now = new Date();
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
+  // Load all status updates (removed 24h time filter to make them permanent)
   const statusesQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
       collection(db, 'statuses'),
-      where('createdAt', '>=', twentyFourHoursAgo),
       orderBy('createdAt', 'desc'),
-      limit(50)
+      limit(100)
     );
   }, [db, user?.uid]);
 
@@ -57,7 +53,7 @@ export default function StatusPage() {
           <div className="flex-1">
             <h3 className="font-headline font-bold">My Status</h3>
             <p className="text-xs text-muted-foreground">
-              {myStatuses.length > 0 ? `${myStatuses.length} updates today` : 'Tap to add a new update'}
+              {myStatuses.length > 0 ? `${myStatuses.length} total updates` : 'Tap to add a new update'}
             </p>
           </div>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -67,7 +63,7 @@ export default function StatusPage() {
 
         {/* Recent Updates */}
         <div className="flex flex-col gap-4">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Recent Updates</h4>
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Updates</h4>
           
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">

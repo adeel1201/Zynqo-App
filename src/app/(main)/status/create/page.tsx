@@ -73,11 +73,10 @@ export default function CreateStatusPage() {
             mediaType,
             caption: caption.trim(),
             viewers: [],
-            createdAt: serverTimestamp(),
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            createdAt: serverTimestamp()
           });
 
-          toast({ title: "Status shared!", description: "Your update will disappear in 24 hours." });
+          toast({ title: "Status shared!", description: "Your update has been posted successfully." });
           router.push('/status');
         } catch (err) {
           toast({ title: "Failed to post status", variant: "destructive" });
@@ -143,7 +142,7 @@ export default function CreateStatusPage() {
               {isLoading ? (
                 <div className="space-y-3">
                   <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-primary animate-pulse">Uploading Story... {Math.round(uploadProgress)}%</p>
+                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-primary animate-pulse">Posting Update... {Math.round(uploadProgress)}%</p>
                 </div>
               ) : (
                 <Button 

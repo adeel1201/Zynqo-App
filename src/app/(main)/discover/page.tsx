@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -22,20 +21,21 @@ import {
   LocateFixed,
   Ghost,
   Shield,
-  Badge,
+  Trash2,
   PlayCircle,
   Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit, orderBy, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, limit, orderBy, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsDialog } from '@/components/zynqo/CommentsDialog';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { useToast } from '@/hooks/use-toast';
 
 // Distance calculation
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -54,6 +54,7 @@ export default function DiscoverPage() {
   const { user, profile } = useAuth();
   const db = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
 
   // --- Shared State ---
   const [activeTab, setActiveTab] = useState('moments');
@@ -97,6 +98,22 @@ export default function DiscoverPage() {
       });
       errorEmitter.emit('permission-error', permissionError);
     });
+  };
+
+  const handleDeleteMoment = (momentId: string) => {
+    if (!db || !user) return;
+    const momentRef = doc(db, 'moments', momentId);
+    deleteDoc(momentRef)
+      .then(() => {
+        toast({ title: "Moment deleted" });
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: momentRef.path,
+          operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   // --- Nearby Logic ---
@@ -197,23 +214,35 @@ export default function DiscoverPage() {
           {moments.map((moment: any, idx) => {
             const isLast = idx === moments.length - 1;
             const isLiked = moment.likes?.includes(user?.uid);
+            const isMe = moment.userId === user?.uid;
+
             return (
               <div 
                 key={moment.id} 
                 ref={isLast ? lastMomentRef : null}
                 className="bg-card rounded-[2rem] overflow-hidden border border-white/5 shadow-xl animate-fade-in"
               >
-                <div className="p-5 flex items-center gap-3">
-                  <Avatar className="w-10 h-10 border border-primary/20">
-                    <AvatarImage src={moment.userPhoto} />
-                    <AvatarFallback>{moment.userName?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-bold text-sm leading-none">{moment.userName}</h4>
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
-                      {moment.createdAt?.toDate ? formatDistanceToNow(moment.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
-                    </span>
+                <div className="p-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 border border-primary/20">
+                      <AvatarImage src={moment.userPhoto} />
+                      <AvatarFallback>{moment.userName?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-bold text-sm leading-none">{moment.userName}</h4>
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
+                        {moment.createdAt?.toDate ? formatDistanceToNow(moment.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
+                      </span>
+                    </div>
                   </div>
+                  {isMe && (
+                    <button 
+                      onClick={() => handleDeleteMoment(moment.id)}
+                      className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
                 {moment.content && <div className="px-5 pb-4"><p className="text-sm leading-relaxed opacity-90">{moment.content}</p></div>}
                 {moment.imageUrl && (

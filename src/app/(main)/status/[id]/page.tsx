@@ -65,7 +65,7 @@ export default function StatusViewPage() {
 
   if (!status) return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-center p-6">
-      <p className="text-muted-foreground mb-4">Status not found or expired.</p>
+      <p className="text-muted-foreground mb-4">Status not found.</p>
       <Button onClick={() => router.push('/status')} variant="outline" className="rounded-2xl">Go Back</Button>
     </div>
   );
