@@ -3,33 +3,52 @@
 import { AppHeader } from '@/components/zynqo/AppHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Plus, Settings, Loader2, PlayCircle, Image as ImageIcon } from 'lucide-react';
+import { Plus, Settings, Loader2, PlayCircle, Image as ImageIcon, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 export default function StatusPage() {
   const { user, profile } = useAuth();
   const db = useFirestore();
   const router = useRouter();
+  const [last24h, setLast24h] = useState<Date | null>(null);
 
-  // Load all status updates (removed 24h time filter to make them permanent)
+  useEffect(() => {
+    const d = new Date();
+    d.setHours(d.getHours() - 24);
+    setLast24h(d);
+  }, []);
+
+  // Load status updates from the last 24 hours
   const statusesQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db || !user?.uid || !last24h) return null;
     return query(
       collection(db, 'statuses'),
+      where('createdAt', '>=', Timestamp.fromDate(last24h)),
       orderBy('createdAt', 'desc'),
       limit(100)
     );
-  }, [db, user?.uid]);
+  }, [db, user?.uid, last24h]);
 
   const { data: statuses = [], loading } = useCollection(statusesQuery);
 
   // Filter statuses into My Status and Recent Updates
   const myStatuses = statuses.filter((s: any) => s.userId === user?.uid);
   const otherStatuses = statuses.filter((s: any) => s.userId !== user?.uid);
+
+  const getExpiryText = (createdAt: any) => {
+    if (!createdAt) return '';
+    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hoursPassed = diff / (1000 * 60 * 60);
+    const hoursLeft = Math.max(0, Math.floor(24 - hoursPassed));
+    return `Expires in ${hoursLeft}h`;
+  };
 
   return (
     <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-24">
@@ -53,7 +72,7 @@ export default function StatusPage() {
           <div className="flex-1">
             <h3 className="font-headline font-bold">My Status</h3>
             <p className="text-xs text-muted-foreground">
-              {myStatuses.length > 0 ? `${myStatuses.length} total updates` : 'Tap to add a new update'}
+              {myStatuses.length > 0 ? `${myStatuses.length} active updates` : 'Tap to add a new update'}
             </p>
           </div>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -90,11 +109,20 @@ export default function StatusPage() {
                     </div>
                     <div className="flex-1">
                       <h5 className="font-semibold text-sm">{story.userName}</h5>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {story.mediaType === 'video' ? <PlayCircle size={10} className="text-primary" /> : <ImageIcon size={10} className="text-primary" />}
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
-                          {formatDistanceToNow(date, { addSuffix: true })}
-                        </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-1">
+                           {story.mediaType === 'video' ? <PlayCircle size={10} className="text-primary" /> : <ImageIcon size={10} className="text-primary" />}
+                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+                             {formatDistanceToNow(date, { addSuffix: true })}
+                           </span>
+                        </div>
+                        <span className="text-white/20">•</span>
+                        <div className="flex items-center gap-1 text-primary/60">
+                           <Clock size={10} />
+                           <span className="text-[9px] font-bold uppercase tracking-tighter">
+                             {getExpiryText(story.createdAt)}
+                           </span>
+                        </div>
                       </div>
                     </div>
                   </div>
