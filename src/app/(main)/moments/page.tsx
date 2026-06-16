@@ -12,8 +12,11 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { CommentsDialog } from '@/components/zynqo/CommentsDialog';
+
+const INITIAL_PAGE_SIZE = 5;
+const INCREMENT_PAGE_SIZE = 5;
 
 export default function MomentsPage() {
   const db = useFirestore();
@@ -22,13 +25,36 @@ export default function MomentsPage() {
 
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [limitCount, setLimitCount] = useState(INITIAL_PAGE_SIZE);
+
+  // Intersection Observer for Infinite Scrolling
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const momentsQuery = useMemoFirebase(() => {
     if (!db) return null;
-    return query(collection(db, 'moments'), orderBy('createdAt', 'desc'), limit(50));
-  }, [db]);
+    return query(
+      collection(db, 'moments'), 
+      orderBy('createdAt', 'desc'), 
+      limit(limitCount)
+    );
+  }, [db, limitCount]);
 
   const { data: moments = [], loading } = useCollection(momentsQuery);
+
+  const hasMore = moments.length === limitCount;
+
+  const lastMomentElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setLimitCount(prevCount => prevCount + INCREMENT_PAGE_SIZE);
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
 
   const handleToggleLike = (momentId: string, currentLikes: string[] = []) => {
     if (!db || !user) return;
@@ -58,21 +84,18 @@ export default function MomentsPage() {
       <AppHeader title="Moments" showActions={false} />
       
       <div className="flex flex-col gap-4 p-4 pb-32">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="animate-spin text-primary" size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing Feed...</p>
-          </div>
-        ) : moments.length > 0 ? (
-          moments.map((moment: any) => {
+        {moments.length > 0 ? (
+          moments.map((moment: any, index: number) => {
             const date = moment.createdAt?.toDate ? moment.createdAt.toDate() : new Date();
             const timeAgo = formatDistanceToNow(date, { addSuffix: true });
             const isLiked = moment.likes?.includes(user?.uid);
             const likeCount = moment.likes?.length || 0;
+            const isLastElement = moments.length === index + 1;
 
             return (
               <div 
                 key={moment.id} 
+                ref={isLastElement ? lastMomentElementRef : null}
                 className="bg-card rounded-[2rem] overflow-hidden border border-white/5 shadow-xl transition-all duration-300"
               >
                 <div className="p-5 flex items-center justify-between">
@@ -155,13 +178,26 @@ export default function MomentsPage() {
               </div>
             );
           })
-        ) : (
+        ) : !loading && (
           <div className="flex flex-col items-center justify-center py-32 text-center px-8">
             <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
               <MessageSquare size={32} className="text-muted-foreground opacity-20" />
             </div>
             <h4 className="font-bold text-lg mb-1">No moments yet</h4>
             <p className="text-xs text-muted-foreground">Be the first to share something with the world!</p>
+          </div>
+        )}
+
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Loader2 className="animate-spin text-primary" size={32} />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Loading Moments...</p>
+          </div>
+        )}
+
+        {!hasMore && moments.length > 0 && !loading && (
+          <div className="py-8 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-30">You've reached the end</p>
           </div>
         )}
       </div>
