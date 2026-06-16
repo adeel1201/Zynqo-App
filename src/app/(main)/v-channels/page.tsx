@@ -87,38 +87,36 @@ export default function VChannelsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden relative">
-      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex flex-col justify-center bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-6">
-             <button 
-               onClick={() => { setFeedType('following'); setLimitCount(PAGE_SIZE); }}
-               className={cn(
-                 "text-base font-bold transition-all relative py-2",
-                 feedType === 'following' ? "text-white scale-110" : "text-white/50"
-               )}
-             >
-               Following
-               {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
-             </button>
-             <button 
-               onClick={() => { setFeedType('for-you'); setLimitCount(PAGE_SIZE); }}
-               className={cn(
-                 "text-base font-bold transition-all relative py-2",
-                 feedType === 'for-you' ? "text-white scale-110" : "text-white/50"
-               )}
-             >
-               For You
-               {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
-             </button>
-          </div>
-          <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-white hover:bg-white/10 rounded-full">
-               <Search size={22} />
-             </Button>
-             <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-white hover:bg-white/10 rounded-full">
-               <Plus size={24} />
-             </Button>
-          </div>
+      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+        <div className="flex items-center gap-6">
+           <button 
+             onClick={() => { setFeedType('following'); setLimitCount(PAGE_SIZE); }}
+             className={cn(
+               "text-base font-bold transition-all relative py-2",
+               feedType === 'following' ? "text-white scale-110" : "text-white/50"
+             )}
+           >
+             Following
+             {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
+           </button>
+           <button 
+             onClick={() => { setFeedType('for-you'); setLimitCount(PAGE_SIZE); }}
+             className={cn(
+               "text-base font-bold transition-all relative py-2",
+               feedType === 'for-you' ? "text-white scale-110" : "text-white/50"
+             )}
+           >
+             For You
+             {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
+           </button>
+        </div>
+        <div className="flex items-center gap-2">
+           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-white hover:bg-white/10 rounded-full">
+             <Search size={22} />
+           </Button>
+           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-white hover:bg-white/10 rounded-full">
+             <Plus size={24} />
+           </Button>
         </div>
       </div>
 
