@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from 'react';
@@ -11,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AppHeader } from '@/components/zynqo/AppHeader';
-import { Camera, Video, Send, Loader2, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { Camera, Video, Send, Loader2, X, Image as ImageIcon, FileText, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Progress } from '@/components/ui/progress';
