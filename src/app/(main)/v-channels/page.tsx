@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -35,17 +35,44 @@ export default function VChannelsPage() {
   const { user } = useAuth();
   const db = useFirestore();
   const router = useRouter();
+  const [feedType, setFeedType] = useState<'following' | 'for-you'>('for-you');
   const [limitCount, setLimitCount] = useState(PAGE_SIZE);
   const observer = useRef<IntersectionObserver | null>(null);
 
+  // Logic to find which channels the user follows
+  const followingChannelsQuery = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return query(
+      collection(db, 'creatorChannels'),
+      where('followerIds', 'array-contains', user.uid)
+    );
+  }, [db, user?.uid]);
+
+  const { data: followedChannels = [] } = useCollection(followingChannelsQuery);
+  const followedCreatorIds = useMemo(() => followedChannels.map(c => c.creatorId), [followedChannels]);
+
+  // Combined Query Logic
   const postsQuery = useMemoFirebase(() => {
     if (!db) return null;
+
+    if (feedType === 'following') {
+      if (followedCreatorIds.length === 0) return null;
+      // Firestore 'in' query is limited to 10 IDs. This is standard for MVP.
+      return query(
+        collection(db, 'creatorPosts'),
+        where('creatorId', 'in', followedCreatorIds.slice(0, 10)),
+        orderBy('timestamp', 'desc'),
+        limit(limitCount)
+      );
+    }
+
+    // For You Feed (Global Trending/Newest)
     return query(
       collection(db, 'creatorPosts'),
       orderBy('timestamp', 'desc'),
       limit(limitCount)
     );
-  }, [db, limitCount]);
+  }, [db, feedType, followedCreatorIds, limitCount]);
 
   const { data: posts = [], loading } = useCollection(postsQuery);
 
@@ -62,20 +89,39 @@ export default function VChannelsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden relative">
-      {/* Header Overlay */}
-      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-16 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-4">
-           <h2 className="text-xl font-headline font-bold text-white flex items-center gap-2">
-             Zynqo Channels <Zap size={16} className="text-yellow-500 fill-current" />
-           </h2>
-        </div>
-        <div className="flex items-center gap-2">
-           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-white hover:bg-white/10 rounded-full">
-             <Search size={22} />
-           </Button>
-           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-white hover:bg-white/10 rounded-full">
-             <Plus size={24} />
-           </Button>
+      {/* Header Overlay with Tabs */}
+      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex flex-col justify-center bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-6">
+             <button 
+               onClick={() => { setFeedType('following'); setLimitCount(PAGE_SIZE); }}
+               className={cn(
+                 "text-base font-bold transition-all relative py-2",
+                 feedType === 'following' ? "text-white scale-110" : "text-white/50"
+               )}
+             >
+               Following
+               {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full" />}
+             </button>
+             <button 
+               onClick={() => { setFeedType('for-you'); setLimitCount(PAGE_SIZE); }}
+               className={cn(
+                 "text-base font-bold transition-all relative py-2",
+                 feedType === 'for-you' ? "text-white scale-110" : "text-white/50"
+               )}
+             >
+               For You
+               {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full" />}
+             </button>
+          </div>
+          <div className="flex items-center gap-2">
+             <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-white hover:bg-white/10 rounded-full">
+               <Search size={22} />
+             </Button>
+             <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-white hover:bg-white/10 rounded-full">
+               <Plus size={24} />
+             </Button>
+          </div>
         </div>
       </div>
 
@@ -89,15 +135,29 @@ export default function VChannelsPage() {
               ref={posts.length === i + 1 ? lastPostRef : null} 
             />
           ))
-        ) : !loading && (
-          <div className="h-full flex flex-col items-center justify-center text-white p-8 text-center gap-4">
-             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center">
-                <PlayCircle size={40} className="text-muted-foreground opacity-30" />
+        ) : !loading ? (
+          <div className="h-full flex flex-col items-center justify-center text-white p-12 text-center gap-6">
+             <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center">
+                <PlayCircle size={48} className="text-muted-foreground opacity-20" />
              </div>
-             <p className="text-sm text-muted-foreground">No channels content found. Be the first to share!</p>
-             <Button onClick={() => router.push('/v-channels/create')} className="rounded-full bg-primary">Start Creating</Button>
+             <div className="space-y-2">
+               <h3 className="text-lg font-bold">
+                 {feedType === 'following' ? "No Following Content" : "No Broadcasts Yet"}
+               </h3>
+               <p className="text-sm text-muted-foreground leading-relaxed">
+                 {feedType === 'following' 
+                   ? "You haven't followed any creators yet. Explore 'For You' to find interesting channels!" 
+                   : "Channels content is currently empty. Be the first to share your broadcast!"}
+               </p>
+             </div>
+             <Button 
+               onClick={() => feedType === 'following' ? setFeedType('for-you') : router.push('/v-channels/create')} 
+               className="rounded-full bg-primary px-8 h-12 font-bold"
+             >
+               {feedType === 'following' ? "Explore For You" : "Start Creating"}
+             </Button>
           </div>
-        )}
+        ) : null}
         {loading && (
           <div className="h-screen flex items-center justify-center bg-black">
              <Loader2 className="animate-spin text-primary" size={32} />
@@ -145,7 +205,7 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
     const postRef = doc(db, 'creatorPosts', post.id);
     deleteDoc(postRef)
       .then(() => {
-        toast({ title: "Post removed from your channel" });
+        toast({ title: "Post removed" });
       })
       .catch(async (err) => {
         const permissionError = new FirestorePermissionError({
@@ -176,9 +236,9 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
            <Image src={post.mediaUrl} alt="Post" fill className="object-contain" />
         </div>
       ) : (
-        <div className="h-full flex items-center justify-center p-12 bg-gradient-to-br from-primary/10 to-background">
-          <p className="text-xl font-medium text-center leading-relaxed text-white/90">
-            {post.caption}
+        <div className="h-full flex items-center justify-center p-12 bg-gradient-to-br from-primary/20 via-black to-secondary/10">
+          <p className="text-xl font-medium text-center leading-relaxed text-white/90 italic">
+            "{post.caption}"
           </p>
         </div>
       )}
@@ -188,37 +248,39 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
         <div className="flex flex-col items-center gap-1">
            <div 
              onClick={() => router.push(`/v-channels/${post.creatorId}`)}
-             className="relative mb-4"
+             className="relative mb-4 cursor-pointer"
            >
-             <Avatar className="w-12 h-12 border-2 border-white">
+             <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
                 <AvatarImage src={post.creatorAvatar} />
                 <AvatarFallback>{post.creatorName?.[0]}</AvatarFallback>
              </Avatar>
-             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary rounded-full p-0.5 border-2 border-black">
-                <Plus size={10} className="text-white" />
-             </div>
+             {!isMe && (
+               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary rounded-full p-0.5 border-2 border-black">
+                  <Plus size={10} className="text-white" />
+               </div>
+             )}
            </div>
         </div>
 
-        <button onClick={toggleLike} className="flex flex-col items-center gap-1">
-           <div className={cn("p-2 rounded-full transition-transform active:scale-125", isLiked ? "text-red-500" : "text-white")}>
+        <button onClick={toggleLike} className="flex flex-col items-center gap-1 group">
+           <div className={cn("p-2 rounded-full transition-transform active:scale-125", isLiked ? "text-red-500" : "text-white drop-shadow-md")}>
               <Heart size={32} className={isLiked ? "fill-current" : ""} />
            </div>
-           <span className="text-[10px] font-bold text-white shadow-sm">{post.likes?.length || 0}</span>
+           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.likes?.length || 0}</span>
         </button>
 
-        <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1">
-           <div className="p-2 text-white transition-transform active:scale-125">
+        <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
+           <div className="p-2 text-white transition-transform active:scale-125 drop-shadow-md">
               <MessageCircle size={32} />
            </div>
-           <span className="text-[10px] font-bold text-white shadow-sm">{post.commentsCount || 0}</span>
+           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.commentsCount || 0}</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1">
-           <div className="p-2 text-white transition-transform active:scale-125">
+        <button className="flex flex-col items-center gap-1 group">
+           <div className="p-2 text-white transition-transform active:scale-125 drop-shadow-md">
               <Share2 size={32} />
            </div>
-           <span className="text-[10px] font-bold text-white shadow-sm">{post.sharesCount || 0}</span>
+           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.sharesCount || 0}</span>
         </button>
 
         {isMe && (
@@ -231,20 +293,19 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
       </div>
 
       {/* Info Overlay */}
-      {(post.type !== 'text' || post.mediaUrl) && (
-        <div className="absolute bottom-16 left-0 right-16 p-4 z-10 bg-gradient-to-t from-black/80 to-transparent">
-          <h4 className="font-bold text-white text-base mb-1 cursor-pointer" onClick={() => router.push(`/v-channels/${post.creatorId}`)}>
-            @{post.creatorName}
-          </h4>
-          <p className="text-sm text-white/90 line-clamp-2 leading-relaxed mb-3">
-            {post.caption}
-          </p>
-          <div className="flex items-center gap-2 text-white/60">
-             <Music2 size={12} className="animate-spin-slow" />
-             <span className="text-[10px] font-medium tracking-wide truncate">Original Sound - {post.creatorName}</span>
-          </div>
+      <div className="absolute bottom-16 left-0 right-16 p-4 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+        <h4 className="font-bold text-white text-base mb-1 cursor-pointer flex items-center gap-2" onClick={() => router.push(`/v-channels/${post.creatorId}`)}>
+          @{post.creatorName}
+          {post.isVerified && <Zap size={12} className="text-yellow-500 fill-current" />}
+        </h4>
+        <p className="text-sm text-white/90 line-clamp-2 leading-relaxed mb-3">
+          {post.caption}
+        </p>
+        <div className="flex items-center gap-2 text-white/60">
+           <Music2 size={12} className="animate-spin-slow" />
+           <span className="text-[10px] font-medium tracking-wide truncate">Original Sound - {post.creatorName}</span>
         </div>
-      )}
+      </div>
 
       {isCommentsOpen && (
         <VCommentsDialog 
