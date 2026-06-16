@@ -36,7 +36,8 @@ import {
   addDoc, 
   serverTimestamp, 
   doc,
-  updateDoc
+  updateDoc,
+  limit
 } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +63,7 @@ export default function ChatDetailPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const chatRef = useMemoFirebase(() => (id && user) ? doc(db, 'chats', id as string) : null, [db, id, user?.uid]);
   const { data: chat, loading: chatLoading } = useDoc(chatRef);
@@ -70,11 +72,13 @@ export default function ChatDetailPage() {
     if (!db || !id || !user) return null;
     return query(
       collection(db, 'chats', id as string, 'messages'),
-      orderBy('timestamp', 'asc')
+      orderBy('timestamp', 'desc'),
+      limit(50)
     );
   }, [db, id, user?.uid]);
 
-  const { data: messages = [], loading: messagesLoading } = useCollection(messagesQuery);
+  const { data: rawMessages = [], loading: messagesLoading } = useCollection(messagesQuery);
+  const messages = useMemo(() => [...rawMessages].reverse(), [rawMessages]);
 
   const partnerId = useMemo(() => chat?.participantIds?.find((uid: string) => uid !== user?.uid), [chat, user?.uid]);
   const partnerRef = useMemoFirebase(() => (partnerId && user) ? doc(db, 'users', partnerId) : null, [db, partnerId, user?.uid]);
@@ -90,6 +94,7 @@ export default function ChatDetailPage() {
     }
   }, [messages.length]);
 
+  // Read receipts & Unread counter reset
   useEffect(() => {
     if (messages.length > 0 && user && id && db) {
       const unreadIncoming = messages.filter(
@@ -100,8 +105,42 @@ export default function ChatDetailPage() {
         const msgRef = doc(db, 'chats', id as string, 'messages', msg.id);
         updateDoc(msgRef, { status: 'read' }).catch(() => {});
       });
+
+      // Update last message status if needed
+      if (chat?.lastMessage?.senderId !== user.uid && chat?.lastMessage?.status !== 'read') {
+        updateDoc(doc(db, 'chats', id as string), {
+          'lastMessage.status': 'read'
+        }).catch(() => {});
+      }
     }
-  }, [messages, user, id, db]);
+  }, [messages, user, id, db, chat]);
+
+  // Typing indicator logic
+  const handleTyping = (text: string) => {
+    setInputText(text);
+    if (!user || !id || !db) return;
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    const chatDocRef = doc(db, 'chats', id as string);
+    
+    // Set typing to true
+    if (text.trim().length > 0) {
+      updateDoc(chatDocRef, {
+        [`typing.${user.uid}`]: true
+      }).catch(() => {});
+
+      typingTimeoutRef.current = setTimeout(() => {
+        updateDoc(chatDocRef, {
+          [`typing.${user.uid}`]: false
+        }).catch(() => {});
+      }, 3000);
+    } else {
+      updateDoc(chatDocRef, {
+        [`typing.${user.uid}`]: false
+      }).catch(() => {});
+    }
+  };
 
   const handleSend = (mediaData?: { url: string; type: string; name?: string; duration?: number }) => {
     if ((!inputText.trim() && !mediaData) || !user || !id || !db) return;
@@ -135,7 +174,8 @@ export default function ChatDetailPage() {
         timestamp: serverTimestamp(),
         status: 'sent'
       },
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      [`typing.${user.uid}`]: false
     }).catch(() => {});
     
     setInputText('');
@@ -279,6 +319,7 @@ export default function ChatDetailPage() {
 
   const partnerName = partnerProfile?.displayName || chat.participantNames?.find((n: string) => n !== user?.displayName) || 'Partner';
   const isOnline = partnerProfile?.onlineStatus === 'online';
+  const isTyping = partnerId && chat.typing?.[partnerId];
 
   return (
     <div className="flex flex-col h-screen bg-[#0E0C12] animate-fade-in relative">
@@ -298,7 +339,11 @@ export default function ChatDetailPage() {
             <div>
               <h3 className="font-bold text-sm leading-none text-foreground">{partnerName}</h3>
               <span className={`text-[9px] uppercase font-bold tracking-widest mt-1 block ${isOnline ? 'text-primary' : 'text-muted-foreground'}`}>
-                {isOnline ? 'Active Now' : 'Offline'}
+                {isTyping ? (
+                  <span className="animate-pulse">Typing...</span>
+                ) : (
+                  isOnline ? 'Active Now' : 'Offline'
+                )}
               </span>
             </div>
           </div>
@@ -368,6 +413,15 @@ export default function ChatDetailPage() {
             </div>
           );
         })}
+        {isTyping && (
+          <div className="flex flex-col items-start animate-fade-in">
+             <div className="bg-card/40 rounded-[1.5rem] rounded-tl-none px-4 py-2 flex items-center gap-1 text-primary">
+                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+             </div>
+          </div>
+        )}
         <div ref={messagesEndRef} className="h-4" />
       </div>
 
@@ -386,7 +440,10 @@ export default function ChatDetailPage() {
                   <Button 
                     key={i} variant="outline" size="sm" 
                     className="rounded-2xl bg-primary/5 border-primary/20 text-xs font-semibold whitespace-nowrap hover:bg-primary/10 text-primary"
-                    onClick={() => setInputText(suggestion)}
+                    onClick={() => {
+                      setInputText(suggestion);
+                      handleTyping(suggestion);
+                    }}
                   >
                     {suggestion}
                   </Button>
@@ -416,7 +473,7 @@ export default function ChatDetailPage() {
               </Button>
               <input 
                 type="text" placeholder="Type a message..." value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={(e) => handleTyping(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium"
               />

@@ -10,7 +10,7 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { 
   Dialog, 
   DialogContent, 
@@ -175,6 +175,7 @@ export default function ChatsPage() {
             const timestamp = formatTimestamp(chat.updatedAt);
             const isUnread = chat.lastMessage?.senderId !== user?.uid && chat.lastMessage?.status !== 'read';
             const isOnline = !isGroup && partnerProfile?.onlineStatus === 'online';
+            const isTyping = partnerId && chat.typing?.[partnerId];
 
             return (
               <Link 
@@ -209,8 +210,14 @@ export default function ChatsPage() {
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <p className={`text-xs truncate leading-relaxed max-w-[85%] ${isUnread ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                      {chat.lastMessage?.senderId === user?.uid && <span className="text-primary/70 font-bold mr-1 text-[10px]">YOU:</span>}
-                      {lastMsg}
+                      {isTyping ? (
+                        <span className="text-primary font-bold animate-pulse">Typing...</span>
+                      ) : (
+                        <>
+                          {chat.lastMessage?.senderId === user?.uid && <span className="text-primary/70 font-bold mr-1 text-[10px]">YOU:</span>}
+                          {lastMsg}
+                        </>
+                      )}
                     </p>
                     {isUnread && (
                       <Badge className="bg-primary text-[10px] h-4 px-1.5 min-w-[1rem] flex items-center justify-center rounded-full">

@@ -25,6 +25,7 @@ service cloud.firestore {
     match /chats/{chatId} {
       allow read: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
       allow create: if isAuthenticated();
+      // Allow updates to typing indicators and lastMessage
       allow update: if isAuthenticated() && (request.auth.uid in resource.data.participantIds);
       
       // Messages sub-collection

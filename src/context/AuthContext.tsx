@@ -37,16 +37,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const userRef = doc(db, 'users', user.uid);
     
+    // Set online on mount
     updateDoc(userRef, {
       onlineStatus: 'online',
       lastSeen: serverTimestamp()
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update',
-        requestResourceData: { onlineStatus: 'online' },
-      });
-      errorEmitter.emit('permission-error', permissionError);
+    }).catch((err) => {
+      console.error("Presence error", err);
     });
 
     const handleVisibilityChange = () => {
@@ -57,12 +53,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }).catch(() => {});
     };
 
+    const handleBeforeUnload = () => {
+      // Best effort to set offline
+      updateDoc(userRef, {
+        onlineStatus: 'offline',
+        lastSeen: serverTimestamp()
+      }).catch(() => {});
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (db) {
-        updateDoc(userRef, {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (db && user) {
+        updateDoc(doc(db, 'users', user.uid), {
           onlineStatus: 'offline',
           lastSeen: serverTimestamp()
         }).catch(() => {});
