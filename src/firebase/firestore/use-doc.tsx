@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { DocumentReference, onSnapshot, DocumentData } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
-import { FirestorePermissionError } from '../errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '../errors';
 import { useAuth } from '../provider';
 
 export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
@@ -15,12 +15,6 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
   useEffect(() => {
     const path = ref?.path || 'unknown_doc';
 
-    console.log(`[Firestore Query] useDoc sub:`, {
-      path,
-      currentUserUid: auth?.currentUser?.uid || 'NONE',
-      authCurrentUserExists: !!auth?.currentUser
-    });
-
     // Guard: Wait for both the reference and a truly authenticated user session.
     if (!ref || !auth?.currentUser) {
       if (!ref) setLoading(false);
@@ -30,18 +24,15 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
     const unsubscribe = onSnapshot(
       ref,
       (doc) => {
-        console.log(`[Firestore Query] Success: ${path}`);
         setData(doc.exists() ? { id: doc.id, ...doc.data() } as any : null);
         setLoading(false);
       },
       async (error) => {
-        console.error(`[Firestore Query] FAILED: ${error.message}`, { path });
-
-        if (auth?.currentUser) {
+        if (auth?.currentUser && error.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: ref.path,
             operation: 'get',
-          });
+          } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
         }
         setLoading(false);

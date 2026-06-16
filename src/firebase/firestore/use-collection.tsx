@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
-import { FirestorePermissionError } from '../errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '../errors';
 import { useAuth } from '../provider';
 
 /**
@@ -21,7 +21,8 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     // Extract path for context
     let path = 'collection_query';
     try {
-      path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'collection_query';
+      // Improved path extraction for standard Query and CollectionReference
+      path = (q as any)._query?.path?.segments?.join('/') || (q as any).path || 'collection_query';
     } catch (e) {}
 
     // Guard: Wait for both the query and a truly authenticated user session.
@@ -38,16 +39,13 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
         setLoading(false);
       },
       async (serverError) => {
-        // Detailed logging for debugging
-        console.error(`[Firestore Query] FAILED: ${serverError.message}`, { path });
-
         // Only emit permission error if we actually have a user, 
         // otherwise it's just a transient auth transition state.
         if (auth?.currentUser && serverError.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: path,
             operation: 'list',
-          });
+          } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
         }
         setLoading(false);

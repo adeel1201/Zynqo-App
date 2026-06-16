@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -29,7 +30,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 interface CommentsDialogProps {
   momentId: string;
@@ -69,13 +70,15 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
     const commentsRef = collection(db, 'moments', momentId, 'comments');
 
     addDoc(commentsRef, commentData)
-      .catch((err) => {
-        const permissionError = new FirestorePermissionError({
-          path: commentsRef.path,
-          operation: 'create',
-          requestResourceData: commentData
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      .catch(async (err) => {
+        if (err.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError({
+            path: commentsRef.path,
+            operation: 'create',
+            requestResourceData: commentData
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -87,12 +90,14 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
     if (!db || !momentId) return;
     const commentRef = doc(db, 'moments', momentId, 'comments', commentId);
     
-    deleteDoc(commentRef).catch((err) => {
-      const permissionError = new FirestorePermissionError({
-        path: commentRef.path,
-        operation: 'delete'
-      });
-      errorEmitter.emit('permission-error', permissionError);
+    deleteDoc(commentRef).catch(async (err) => {
+      if (err.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: commentRef.path,
+          operation: 'delete'
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      }
     });
   };
 
