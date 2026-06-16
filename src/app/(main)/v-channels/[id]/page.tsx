@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -31,7 +30,9 @@ import {
   Edit3,
   MoreVertical,
   Lock,
-  Bookmark
+  Bookmark,
+  Plus,
+  PlayCircle
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -138,7 +139,7 @@ export default function CreatorChannelProfilePage() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] text-white pb-20 animate-fade-in">
+    <div className="flex flex-col min-h-screen bg-[#0E0C12] text-white pb-20 animate-fade-in relative">
       {/* TikTok Style Header */}
       <div className="relative w-full">
          <header className="sticky top-0 z-50 safe-top flex items-center justify-between px-2 h-16 bg-[#0E0C12]/80 backdrop-blur-xl border-b border-white/5">
@@ -249,9 +250,22 @@ export default function CreatorChannelProfilePage() {
             ))}
           </div>
           {posts.length === 0 && (
-            <div className="py-20 flex flex-col items-center text-muted-foreground opacity-40">
-              <VideoIcon size={40} className="mb-2" />
-              <p className="text-xs font-bold uppercase tracking-widest">No videos yet</p>
+            <div className="py-20 flex flex-col items-center text-center px-8 gap-4">
+              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground opacity-20">
+                <VideoIcon size={40} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-white/60 uppercase tracking-widest">No broadcasts yet</p>
+                <p className="text-xs text-muted-foreground">Start sharing your social broadcasts with the world.</p>
+              </div>
+              {isMe && (
+                <Button 
+                  onClick={() => router.push('/v-channels/create')}
+                  className="rounded-full bg-primary px-8 mt-2 h-11 font-bold shadow-lg shadow-primary/20"
+                >
+                  Upload Your First Video
+                </Button>
+              )}
             </div>
           )}
         </TabsContent>
@@ -271,6 +285,17 @@ export default function CreatorChannelProfilePage() {
            </div>
         </TabsContent>
       </Tabs>
+
+      {/* Owner-only Floating Upload Button */}
+      {isMe && posts.length > 0 && (
+        <Button 
+          onClick={() => router.push('/v-channels/create')}
+          className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-50 transition-transform active:scale-90 flex items-center justify-center"
+          size="icon"
+        >
+          <Plus size={28} />
+        </Button>
+      )}
 
       {/* Follower/Following Modals */}
       <StatListModal 
@@ -330,5 +355,3 @@ function StatListModal({ isOpen, onClose, type, targetId }: { isOpen: boolean; o
     </Dialog>
   );
 }
-
-import { PlayCircle } from 'lucide-react';
