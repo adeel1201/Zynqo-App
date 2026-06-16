@@ -1,13 +1,43 @@
-// Basic service worker for PWA installability
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+const CACHE_NAME = 'zynqo-cache-v1';
+const urlsToCache = [
+  '/',
+  '/welcome',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // We need a fetch listener for the PWA to be considered installable
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
