@@ -31,8 +31,10 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary/30;
+  body, html, #root {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    @apply font-body antialiased selection:bg-primary/30;
     overflow-x: hidden;
   }
 }
@@ -55,4 +57,9 @@
 
 .safe-top {
   padding-top: env(safe-area-inset-top);
+}
+
+/* Force standard button text clarity in light mode */
+.bg-primary {
+  color: #FFFFFF !important;
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
@@ -45,7 +44,7 @@ export default function ProfilePage() {
 
   if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12]">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <Loader2 className="animate-spin text-primary" size={32} />
       </div>
     );
@@ -84,13 +83,13 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-24">
+    <div className="flex flex-col animate-fade-in bg-white min-h-screen pb-24">
       <AppHeader title="Me" showActions={false} showSearch={false} />
       
       {/* Profile Header */}
-      <div className="p-6 flex items-center gap-4 bg-card/20 border-b border-white/5">
+      <div className="p-6 flex items-center gap-4 bg-muted/20 border-b border-border">
         <div className="relative">
-          <Avatar className="w-20 h-20 border-2 border-primary/20 shadow-xl">
+          <Avatar className="w-20 h-20 border-2 border-primary/20 shadow-xl bg-white">
             <AvatarImage src={profile.profilePhoto} />
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
               {profile.displayName?.[0]}
@@ -98,14 +97,14 @@ export default function ProfilePage() {
           </Avatar>
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-headline font-bold truncate">{profile.displayName}</h2>
+          <h2 className="text-xl font-headline font-bold truncate text-foreground">{profile.displayName}</h2>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">@{profile.username}</p>
           <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
             <Edit3 size={12} />
             Edit Profile
           </Link>
         </div>
-        <Button variant="ghost" size="icon" className="text-muted-foreground rounded-2xl bg-white/5">
+        <Button variant="ghost" size="icon" className="text-muted-foreground rounded-2xl bg-muted/50">
           <QrCode size={20} />
         </Button>
       </div>
@@ -117,7 +116,7 @@ export default function ProfilePage() {
             <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
             <span className="text-[9px] font-black text-primary/40">{myChannels.length}/3 Channels</span>
           </div>
-          <div className="bg-card/40 rounded-[2rem] border border-white/5 overflow-hidden">
+          <div className="bg-white rounded-[2rem] border border-border overflow-hidden shadow-sm">
             {channelsLoading ? (
               <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-primary/30" size={20} /></div>
             ) : myChannels.length > 0 ? (
@@ -126,7 +125,7 @@ export default function ProfilePage() {
                   <Link 
                     key={channel.id} 
                     href={`/v-channels/${channel.id}`}
-                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-none"
+                    className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors border-b border-border last:border-none"
                   >
                     <div className="flex items-center gap-4">
                       <Avatar className="w-10 h-10 rounded-xl border border-primary/20">
@@ -134,7 +133,7 @@ export default function ProfilePage() {
                         <AvatarFallback><PlayCircle size={20} /></AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold">{channel.name}</span>
+                        <span className="text-sm font-bold text-foreground">{channel.name}</span>
                         <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-1.5 capitalize">
                            {channel.privacy || 'public'} channel
                         </span>
@@ -150,13 +149,13 @@ export default function ProfilePage() {
                 )}
               </>
             ) : (
-              <button onClick={handleCreateChannel} className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors group">
+              <button onClick={handleCreateChannel} className="w-full flex items-center justify-between p-5 hover:bg-muted/30 transition-colors group">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                     <Plus size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">Create Video Channel</p>
+                    <p className="text-sm font-bold text-foreground">Create Video Channel</p>
                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
                   </div>
                 </div>
@@ -169,7 +168,7 @@ export default function ProfilePage() {
         {/* Regular Settings */}
         <section className="space-y-3">
           <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
-          <div className="bg-card/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
+          <div className="bg-white rounded-[2.5rem] border border-border overflow-hidden shadow-sm">
             <ProfileMenuItem icon={Settings} label="App Settings" href="/settings" />
             <ProfileMenuItem icon={Globe} label="Privacy Settings" href="/settings/privacy" />
             <ProfileMenuItem icon={Bell} label="Notifications" href="/settings/notifications" />
@@ -197,12 +196,12 @@ export default function ProfilePage() {
 
 function ProfileMenuItem({ icon: Icon, label, href }: { icon: any, label: string, href: string }) {
   return (
-    <Link href={href} className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-none">
+    <Link href={href} className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors border-b border-border last:border-none">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary/80">
+        <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-primary/80">
           <Icon size={20} />
         </div>
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm font-medium text-foreground">{label}</span>
       </div>
       <ChevronRight size={16} className="text-muted-foreground/30" />
     </Link>

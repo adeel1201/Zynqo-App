@@ -49,7 +49,7 @@ export function CallOverlay() {
 
   const { data: incomingCalls } = useCollection(incomingCallsQuery);
 
-  // Listen for outgoing calls (where I am caller and it's active)
+  // Listen for outgoing calls
   const outgoingCallsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
@@ -125,17 +125,15 @@ export function CallOverlay() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
-      <div className="relative w-full max-w-sm aspect-[9/16] bg-card rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col items-center justify-between py-16 px-8">
-        {/* Background Ambient Glow */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-background pointer-events-none" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/80 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-sm aspect-[9/16] bg-white rounded-[3rem] border border-border shadow-2xl overflow-hidden flex flex-col items-center justify-between py-16 px-8">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-white pointer-events-none" />
         
-        {/* User Info */}
         <div className="relative z-10 flex flex-col items-center gap-6 mt-8">
           <div className="relative">
-            <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-2xl animate-pulse-soft">
+            <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-2xl bg-white">
               <AvatarImage src={partnerPhoto} />
-              <AvatarFallback className="text-4xl font-bold">{partnerName?.[0]}</AvatarFallback>
+              <AvatarFallback className="text-4xl font-bold bg-muted">{partnerName?.[0]}</AvatarFallback>
             </Avatar>
             {isOngoing && (
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-lg">
@@ -151,17 +149,15 @@ export function CallOverlay() {
           </div>
         </div>
 
-        {/* Video Placeholder */}
         {activeCall.type === 'video' && isOngoing && (
-          <div className="relative w-full aspect-video bg-black/40 rounded-2xl border border-white/5 flex items-center justify-center overflow-hidden">
-             <Video className="text-primary/20" size={48} />
-             <div className="absolute top-4 right-4 w-24 aspect-[3/4] bg-card/60 border border-white/10 rounded-xl flex items-center justify-center backdrop-blur-md">
+          <div className="relative w-full aspect-video bg-black rounded-2xl border border-border flex items-center justify-center overflow-hidden">
+             <Video className="text-white/20" size={48} />
+             <div className="absolute top-4 right-4 w-24 aspect-[3/4] bg-white/60 border border-border rounded-xl flex items-center justify-center backdrop-blur-md">
                 <span className="text-[8px] font-bold text-muted-foreground uppercase">YOU</span>
              </div>
           </div>
         )}
 
-        {/* Action Controls */}
         <div className="relative z-10 w-full flex flex-col gap-8 items-center pb-8">
           {isIncoming && (
             <div className="flex gap-12 items-center">
@@ -198,7 +194,7 @@ export function CallOverlay() {
                 <Button 
                   variant="ghost" size="icon" 
                   onClick={() => setIsMuted(!isMuted)}
-                  className={cn("w-14 h-14 rounded-2xl bg-white/5 border border-white/5", isMuted && "bg-primary text-white")}
+                  className={cn("w-14 h-14 rounded-2xl bg-muted border border-border", isMuted && "bg-primary text-white border-primary")}
                 >
                   {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
                 </Button>
@@ -206,14 +202,14 @@ export function CallOverlay() {
                   <Button 
                     variant="ghost" size="icon" 
                     onClick={() => setIsVideoOff(!isVideoOff)}
-                    className={cn("w-14 h-14 rounded-2xl bg-white/5 border border-white/5", isVideoOff && "bg-primary text-white")}
+                    className={cn("w-14 h-14 rounded-2xl bg-muted border border-border", isVideoOff && "bg-primary text-white border-primary")}
                   >
                     {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
                   </Button>
                 )}
                 <Button 
                   variant="ghost" size="icon" 
-                  className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5"
+                  className="w-14 h-14 rounded-2xl bg-muted border border-border"
                 >
                   <Maximize2 size={22} />
                 </Button>

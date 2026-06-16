@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/navigation';
@@ -18,7 +17,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-morphism safe-bottom max-w-md mx-auto border-t border-white/5 px-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-morphism safe-bottom max-w-md mx-auto border-t border-black/5 px-1 bg-white/95">
       <div className="flex items-center justify-between h-16">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname.startsWith(item.path) || (pathname === '/' && item.path === '/chats');
@@ -35,7 +34,7 @@ export function BottomNav() {
             >
               <div className={cn(
                 "p-1.5 rounded-xl transition-all duration-300",
-                isActive && "bg-primary/10 shadow-[0_0_15px_rgba(159,95,245,0.2)]"
+                isActive && "bg-primary/10 shadow-[0_0_15px_rgba(159,95,245,0.1)]"
               )}>
                 <Icon size={18} className={cn("transition-transform", isActive && "scale-110")} />
               </div>

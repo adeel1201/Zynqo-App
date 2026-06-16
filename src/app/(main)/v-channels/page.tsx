@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
@@ -62,10 +61,9 @@ export default function VChannelsPage() {
       );
     }
 
-    // For You Feed: WeChat Style - Show only public content globally
     return query(
       collection(db, 'creatorPosts'),
-      where('privacy', '==', 'public'), // Only public posts in global feed
+      where('privacy', '==', 'public'),
       orderBy('likeCount', 'desc'),
       orderBy('timestamp', 'desc'),
       limit(limitCount)
@@ -86,35 +84,35 @@ export default function VChannelsPage() {
   }, [loading]);
 
   return (
-    <div className="flex flex-col h-screen bg-black overflow-hidden relative">
-      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+    <div className="flex flex-col h-screen bg-white overflow-hidden relative">
+      <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex items-center justify-between bg-gradient-to-b from-white/90 via-white/40 to-transparent">
         <div className="flex items-center gap-6">
            <button 
              onClick={() => { setFeedType('following'); setLimitCount(PAGE_SIZE); }}
              className={cn(
                "text-base font-bold transition-all relative py-2",
-               feedType === 'following' ? "text-white scale-110" : "text-white/50"
+               feedType === 'following' ? "text-primary scale-110" : "text-muted-foreground"
              )}
            >
              Following
-             {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
+             {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.3)]" />}
            </button>
            <button 
              onClick={() => { setFeedType('for-you'); setLimitCount(PAGE_SIZE); }}
              className={cn(
                "text-base font-bold transition-all relative py-2",
-               feedType === 'for-you' ? "text-white scale-110" : "text-white/50"
+               feedType === 'for-you' ? "text-primary scale-110" : "text-muted-foreground"
              )}
            >
              For You
-             {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
+             {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.3)]" />}
            </button>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-white hover:bg-white/10 rounded-full">
+           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/search')} className="text-muted-foreground hover:bg-black/5 rounded-full">
              <Search size={22} />
            </Button>
-           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-white hover:bg-white/10 rounded-full">
+           <Button variant="ghost" size="icon" onClick={() => router.push('/v-channels/create')} className="text-muted-foreground hover:bg-black/5 rounded-full">
              <Plus size={24} />
            </Button>
         </div>
@@ -130,8 +128,8 @@ export default function VChannelsPage() {
             />
           ))
         ) : !loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-white p-12 text-center gap-6">
-             <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center">
+          <div className="h-full flex flex-col items-center justify-center text-foreground p-12 text-center gap-6">
+             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
                 <PlayCircle size={48} className="text-muted-foreground opacity-20" />
              </div>
              <div className="space-y-2">
@@ -153,7 +151,7 @@ export default function VChannelsPage() {
           </div>
         ) : null}
         {loading && (
-          <div className="h-screen flex items-center justify-center bg-black">
+          <div className="h-screen flex items-center justify-center bg-white">
              <Loader2 className="animate-spin text-primary" size={32} />
           </div>
         )}
@@ -188,7 +186,6 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
       likeCount: increment(newLiked ? 1 : -1)
     });
 
-    // Update cumulative likes on channel profile
     updateDoc(creatorChannelRef, {
       totalLikes: increment(newLiked ? 1 : -1)
     }).catch(() => {});
@@ -217,12 +214,12 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
   const isMe = user?.uid === post.creatorId;
 
   return (
-    <div ref={ref} className="h-screen w-full snap-start relative flex flex-col justify-center bg-black overflow-hidden">
+    <div ref={ref} className="h-screen w-full snap-start relative flex flex-col justify-center bg-white overflow-hidden">
       {post.type === 'video' ? (
         <video 
           ref={videoRef}
           src={post.mediaUrl}
-          className="w-full h-full object-contain cursor-pointer"
+          className="w-full h-full object-contain cursor-pointer bg-black"
           loop
           playsInline
           onClick={handleVideoClick}
@@ -230,12 +227,12 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
           onPause={() => setIsPlaying(false)}
         />
       ) : post.type === 'image' ? (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full bg-muted/20">
            <Image src={post.mediaUrl} alt="Post" fill className="object-contain" />
         </div>
       ) : (
-        <div className="h-full flex items-center justify-center p-12 bg-gradient-to-br from-primary/20 via-black to-secondary/10">
-          <p className="text-xl font-medium text-center leading-relaxed text-white/90 italic">
+        <div className="h-full flex items-center justify-center p-12 bg-gradient-to-br from-primary/5 via-white to-secondary/5">
+          <p className="text-xl font-medium text-center leading-relaxed text-foreground italic">
             "{post.caption}"
           </p>
         </div>
@@ -249,7 +246,7 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
                 <AvatarFallback>{post.creatorName?.[0]}</AvatarFallback>
              </Avatar>
              {!isMe && (
-               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary rounded-full p-0.5 border-2 border-black">
+               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary rounded-full p-0.5 border-2 border-white">
                   <Plus size={10} className="text-white" />
                </div>
              )}
@@ -257,44 +254,44 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
         </div>
 
         <button onClick={toggleLike} className="flex flex-col items-center gap-1 group">
-           <div className={cn("p-2 rounded-full transition-transform active:scale-125", isLiked ? "text-red-500" : "text-white drop-shadow-md")}>
+           <div className={cn("p-2 rounded-full transition-transform active:scale-125", isLiked ? "text-red-500" : "text-foreground drop-shadow-md")}>
               <Heart size={32} className={isLiked ? "fill-current" : ""} />
            </div>
-           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.likeCount || 0}</span>
+           <span className="text-[10px] font-bold text-foreground drop-shadow-md">{post.likeCount || 0}</span>
         </button>
 
         <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
-           <div className="p-2 text-white transition-transform active:scale-125 drop-shadow-md">
+           <div className="p-2 text-foreground transition-transform active:scale-125 drop-shadow-md">
               <MessageCircle size={32} />
            </div>
-           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.commentsCount || 0}</span>
+           <span className="text-[10px] font-bold text-foreground drop-shadow-md">{post.commentsCount || 0}</span>
         </button>
 
         <button className="flex flex-col items-center gap-1 group">
-           <div className="p-2 text-white transition-transform active:scale-125 drop-shadow-md">
+           <div className="p-2 text-foreground transition-transform active:scale-125 drop-shadow-md">
               <Share2 size={32} />
            </div>
-           <span className="text-[10px] font-bold text-white drop-shadow-md">{post.sharesCount || 0}</span>
+           <span className="text-[10px] font-bold text-foreground drop-shadow-md">{post.sharesCount || 0}</span>
         </button>
 
         {isMe && (
-          <button onClick={handleDelete} className="flex flex-col items-center gap-1 mt-2 opacity-50 hover:opacity-100 transition-opacity">
-            <div className="p-2 text-white">
+          <button onClick={handleDelete} className="flex flex-col items-center gap-1 mt-2 opacity-30 hover:opacity-100 transition-opacity">
+            <div className="p-2 text-foreground">
                <Trash2 size={24} />
             </div>
           </button>
         )}
       </div>
 
-      <div className="absolute bottom-16 left-0 right-16 p-4 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-        <h4 className="font-bold text-white text-base mb-1 cursor-pointer flex items-center gap-2" onClick={() => router.push(`/v-channels/${post.creatorId}`)}>
+      <div className="absolute bottom-16 left-0 right-16 p-4 z-10 bg-gradient-to-t from-white/95 via-white/60 to-transparent">
+        <h4 className="font-bold text-foreground text-base mb-1 cursor-pointer flex items-center gap-2" onClick={() => router.push(`/v-channels/${post.creatorId}`)}>
           @{post.creatorName}
           {post.isVerified && <Zap size={12} className="text-yellow-500 fill-current" />}
         </h4>
-        <p className="text-sm text-white/90 line-clamp-2 leading-relaxed mb-3">
+        <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed mb-3">
           {post.caption}
         </p>
-        <div className="flex items-center gap-2 text-white/60">
+        <div className="flex items-center gap-2 text-muted-foreground">
            <Music2 size={12} className="animate-spin-slow" />
            <span className="text-[10px] font-medium tracking-wide truncate">Original Sound - {post.creatorName}</span>
         </div>

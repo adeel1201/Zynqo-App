@@ -184,21 +184,21 @@ export default function DiscoverPage() {
       <AppHeader title="Discover" showSearch={false} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="sticky top-[72px] z-40 bg-background/80 backdrop-blur-xl border-b border-border">
+        <div className="sticky top-[72px] z-40 bg-white/80 backdrop-blur-xl border-b border-border">
           <TabsList className="w-full h-14 bg-transparent p-0 flex justify-center gap-8">
             <TabsTrigger 
               value="moments" 
               className="bg-transparent border-none text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold uppercase tracking-widest text-[10px] relative transition-all"
             >
               Moments
-              {activeTab === 'moments' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.5)]" />}
+              {activeTab === 'moments' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.3)]" />}
             </TabsTrigger>
             <TabsTrigger 
               value="nearby" 
               className="bg-transparent border-none text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold uppercase tracking-widest text-[10px] relative transition-all"
             >
               Nearby
-              {activeTab === 'nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.5)]" />}
+              {activeTab === 'nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.3)]" />}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -222,7 +222,7 @@ export default function DiscoverPage() {
                       <AvatarFallback className="bg-primary/5 text-primary">{moment.userName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h4 className="font-bold text-sm leading-none">{moment.userName}</h4>
+                      <h4 className="font-bold text-sm leading-none text-foreground">{moment.userName}</h4>
                       <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
                         {moment.createdAt?.toDate ? formatDistanceToNow(moment.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
                       </span>
@@ -237,7 +237,7 @@ export default function DiscoverPage() {
                     </button>
                   )}
                 </div>
-                {moment.content && <div className="px-5 pb-4"><p className="text-sm leading-relaxed opacity-90">{moment.content}</p></div>}
+                {moment.content && <div className="px-5 pb-4"><p className="text-sm leading-relaxed text-foreground/90">{moment.content}</p></div>}
                 {moment.imageUrl && (
                   <div className="relative aspect-[4/3] w-full bg-muted/20">
                     <Image src={moment.imageUrl} alt="Moment" fill className="object-cover" />
@@ -275,7 +275,7 @@ export default function DiscoverPage() {
                 <Ghost size={40} />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-bold">Ghost Mode Active</h3>
+                <h3 className="text-lg font-bold text-foreground">Ghost Mode Active</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed px-8">Enable location sharing in your profile settings to see people nearby.</p>
               </div>
               <Button onClick={() => router.push('/profile/edit')} className="rounded-2xl bg-primary">Settings</Button>
@@ -291,7 +291,7 @@ export default function DiscoverPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <h2 className="text-xl font-headline font-bold">Discovery Radar</h2>
+                  <h2 className="text-xl font-headline font-bold text-foreground">Discovery Radar</h2>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Scanning for social energy nearby</p>
                 </div>
                 {nearbyError ? (
@@ -309,7 +309,7 @@ export default function DiscoverPage() {
               </div>
 
               <section className="space-y-4">
-                <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2"><Users size={16} className="text-primary" /> People Nearby</h3>
+                <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Users size={16} className="text-primary" /> People Nearby</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyUsers.map((u: any) => (
                     <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-border hover:bg-muted/50 transition-all cursor-pointer group shadow-sm">
@@ -319,7 +319,7 @@ export default function DiscoverPage() {
                           <AvatarFallback className="bg-primary/5 text-primary">{u.displayName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-bold text-sm">{u.displayName}</h4>
+                          <h4 className="font-bold text-sm text-foreground">{u.displayName}</h4>
                           <span className="text-[10px] text-primary font-bold uppercase tracking-wider mt-1 block">
                             {u.distance < 1 ? `${Math.round(u.distance * 1000)}m away` : `${u.distance.toFixed(1)}km away`}
                           </span>
@@ -333,7 +333,7 @@ export default function DiscoverPage() {
               </section>
 
               <section className="space-y-4">
-                <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2"><Radio size={16} className="text-secondary" /> Local Channels</h3>
+                <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Radio size={16} className="text-secondary" /> Local Channels</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyChannels.map((c: any) => (
                     <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-secondary/5 p-4 rounded-3xl border border-secondary/10 hover:bg-secondary/10 transition-all cursor-pointer group shadow-sm">
@@ -343,7 +343,7 @@ export default function DiscoverPage() {
                           <AvatarFallback className="text-secondary"><Radio size={20} /></AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-bold text-sm">{c.name}</h4>
+                          <h4 className="font-bold text-sm text-foreground">{c.name}</h4>
                           <span className="text-[10px] text-secondary font-bold uppercase tracking-wider mt-1 block">
                             {c.distance < 1 ? `${Math.round(c.distance * 1000)}m away` : `${c.distance.toFixed(1)}km away`}
                           </span>
