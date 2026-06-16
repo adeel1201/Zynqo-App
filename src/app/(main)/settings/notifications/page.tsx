@@ -8,7 +8,7 @@ import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ChevronLeft, Bell, MessageSquare, Phone, LayoutGrid, Radio } from 'lucide-react';
+import { ChevronLeft, Bell, MessageSquare, Phone, LayoutGrid, Radio, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function NotificationSettingsPage() {
@@ -24,7 +24,8 @@ export default function NotificationSettingsPage() {
     messages: true,
     calls: true,
     moments: true,
-    channels: true
+    channels: true,
+    security: true
   };
 
   const handleToggle = async (key: string, value: boolean) => {
@@ -89,6 +90,13 @@ export default function NotificationSettingsPage() {
             label="Channels" 
             checked={notifications.channels} 
             onCheckedChange={(v: boolean) => handleToggle('channels', v)} 
+            disabled={isLoading}
+          />
+          <NotifyRow 
+            icon={ShieldCheck} 
+            label="Security Alerts" 
+            checked={notifications.security !== false} 
+            onCheckedChange={(v: boolean) => handleToggle('security', v)} 
             disabled={isLoading}
           />
         </div>

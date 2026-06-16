@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,18 +9,33 @@ import { Label } from '@/components/ui/label';
 import { ChevronLeft, Mail, Lock, Smartphone, Facebook, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const db = useFirestore();
   
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const logSecurityEvent = (userId: string, status: 'success' | 'failure') => {
+    if (!db) return;
+    const logsRef = collection(db, 'users', userId, 'securityLogs');
+    addDoc(logsRef, {
+      userId,
+      type: 'login',
+      status,
+      timestamp: serverTimestamp(),
+      deviceInfo: navigator.userAgent.split(')')[0].split('(')[1] || 'Web Browser',
+      ipAddress: 'Captured on server' // In production, usually handled by Cloud Functions
+    }).catch(() => {});
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +54,16 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      logSecurityEvent(userCredential.user.uid, 'success');
       router.push('/chats');
     } catch (error: any) {
       let errorMessage = "Failed to sign in. Please check your credentials.";
       if (error.code === 'auth/user-not-found') errorMessage = "No user found with this email.";
       if (error.code === 'auth/wrong-password') errorMessage = "Incorrect password.";
+      
+      // If we have an email, try to log the failure if possible (might not have UID yet)
+      // For now, we only log successful login tracking via client for the specific user subcollection
       
       toast({
         title: "Login Failed",
@@ -73,12 +93,14 @@ export default function LoginPage() {
         {/* Login Method Toggle */}
         <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
           <button 
+            type="button"
             onClick={() => setLoginMethod('email')}
             className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'email' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground'}`}
           >
             Email
           </button>
           <button 
+            type="button"
             onClick={() => setLoginMethod('phone')}
             className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'phone' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground'}`}
           >

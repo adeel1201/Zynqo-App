@@ -13,7 +13,8 @@ import {
   Database, 
   HelpCircle, 
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -34,7 +35,8 @@ export default function SettingsPage() {
           <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Personal</h4>
           <div className="bg-card/40 rounded-[2rem] border border-white/5 overflow-hidden">
             <SettingsItem icon={User} label="Account Management" href="/settings/account" />
-            <SettingsItem icon={Shield} label="Privacy & Security" href="/settings/privacy" />
+            <SettingsItem icon={Lock} label="Security & Verification" href="/settings/security" />
+            <SettingsItem icon={Shield} label="Privacy & Visibility" href="/settings/privacy" />
             <SettingsItem icon={Bell} label="Notifications" href="/settings/notifications" />
           </div>
         </section>

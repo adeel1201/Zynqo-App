@@ -111,6 +111,32 @@
       },
       "required": ["content", "authorId", "timestamp"]
     },
+    "SecurityLog": {
+      "title": "SecurityLog",
+      "description": "A record of security-related events for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["login", "logout", "password_change", "mfa_enabled", "mfa_disabled", "email_verified"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "deviceInfo": { "type": "string" },
+        "ipAddress": { "type": "string" },
+        "status": { "type": "string", "enum": ["success", "failure"] }
+      }
+    },
+    "Device": {
+      "title": "Device",
+      "description": "A registered device or session for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "deviceName": { "type": "string" },
+        "browser": { "type": "string" },
+        "os": { "type": "string" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "isCurrent": { "type": "boolean" }
+      }
+    },
     "User": {
       "title": "User",
       "description": "User profile with discovery settings and application preferences.",
@@ -127,6 +153,7 @@
         "hideLocation": { "type": "boolean" },
         "lastSeen": { "type": "string", "format": "date-time" },
         "onlineStatus": { "type": "string" },
+        "mfaEnabled": { "type": "boolean" },
         "settings": {
           "type": "object",
           "properties": {
@@ -138,7 +165,8 @@
                 "messages": { "type": "boolean" },
                 "calls": { "type": "boolean" },
                 "moments": { "type": "boolean" },
-                "channels": { "type": "boolean" }
+                "channels": { "type": "boolean" },
+                "security": { "type": "boolean" }
               }
             },
             "privacy": {
@@ -163,6 +191,14 @@
     "/users/{userId}": {
       "schema": "User",
       "description": "Global user directory."
+    },
+    "/users/{userId}/securityLogs/{logId}": {
+      "schema": "SecurityLog",
+      "description": "Security events for a user."
+    },
+    "/users/{userId}/devices/{deviceId}": {
+      "schema": "Device",
+      "description": "Registered sessions for a user."
     },
     "/moments/{momentId}": {
       "schema": "Moment",
