@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
@@ -10,7 +11,7 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   Dialog, 
   DialogContent, 
@@ -32,12 +33,12 @@ export default function ChatsPage() {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   // Load real chats from Firestore where current user is a participant
+  // Removed server-side orderBy to avoid requiring a composite index
   const chatsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
       collection(db, 'chats'),
-      where('participantIds', 'array-contains', user.uid),
-      orderBy('updatedAt', 'desc')
+      where('participantIds', 'array-contains', user.uid)
     );
   }, [db, user?.uid]);
 
@@ -46,7 +47,7 @@ export default function ChatsPage() {
   // Load all users to get their presence status
   const usersQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return query(collection(db, 'users'), orderBy('displayName', 'asc'));
+    return query(collection(db, 'users'));
   }, [db, user?.uid]);
 
   const { data: allUsers = [] } = useCollection(usersQuery);
@@ -60,9 +61,16 @@ export default function ChatsPage() {
     return map;
   }, [allUsers]);
 
-  // Filter conversations for the main list based on search input
+  // Sort and filter conversations for the main list
   const filteredChats = useMemo(() => {
-    return chats.filter((chat: any) => {
+    // Client-side sorting by updatedAt desc
+    const sorted = [...chats].sort((a: any, b: any) => {
+      const timeA = a.updatedAt?.toMillis?.() || 0;
+      const timeB = b.updatedAt?.toMillis?.() || 0;
+      return timeB - timeA;
+    });
+
+    return sorted.filter((chat: any) => {
       const partnerName = chat.type === 'group' 
         ? chat.groupName 
         : chat.participantNames?.find((n: string) => n !== user?.displayName) || '';

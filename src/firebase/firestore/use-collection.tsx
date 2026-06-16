@@ -18,22 +18,13 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
   const auth = useAuth();
 
   useEffect(() => {
-    // Attempt to extract the path for debugging
-    let path = 'unknown_query';
+    // Extract path for context
+    let path = 'collection_query';
     try {
-      // Access internal path segments if available (reliable for both Ref and Query)
-      path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'unknown_query';
+      path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'collection_query';
     } catch (e) {}
 
-    // Debugging logs to pinpoint auth race conditions
-    console.log(`[Firestore Query] useCollection sub:`, {
-      path,
-      currentUserUid: auth?.currentUser?.uid || 'NONE',
-      authCurrentUserExists: !!auth?.currentUser
-    });
-
-    // Guard: Do not initiate a subscription if there is no query or NO authenticated user.
-    // This prevents "Missing or insufficient permissions" during the auth handshake.
+    // Guard: Wait for both the query and a truly authenticated user session.
     if (!q || !auth?.currentUser) {
       if (!q) setLoading(false);
       return;
@@ -42,17 +33,17 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        console.log(`[Firestore Query] Success: ${path}`);
         const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
         setData(results);
         setLoading(false);
       },
       async (serverError) => {
+        // Detailed logging for debugging
         console.error(`[Firestore Query] FAILED: ${serverError.message}`, { path });
 
         // Only emit permission error if we actually have a user, 
         // otherwise it's just a transient auth transition state.
-        if (auth?.currentUser) {
+        if (auth?.currentUser && serverError.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: path,
             operation: 'list',
@@ -64,7 +55,7 @@ export function useCollection<T = DocumentData>(q: Query<T> | null) {
     );
 
     return unsubscribe;
-  }, [q, auth?.currentUser?.uid]); // Re-run when query or auth state changes
+  }, [q, auth?.currentUser?.uid]);
 
   return { data, loading };
 }
