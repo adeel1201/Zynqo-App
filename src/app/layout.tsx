@@ -3,9 +3,10 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import Script from 'next/script';
 
 export const viewport: Viewport = {
-  themeColor: '#7B5AFF',
+  themeColor: '#6A0DAD',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -47,6 +48,19 @@ export default function RootLayout({
             <Toaster />
           </AuthProvider>
         </FirebaseClientProvider>
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+                });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
