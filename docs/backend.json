@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Moment": {
+      "title": "Moment",
+      "description": "A social post shared by a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who created the moment."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "userPhoto": {
+          "type": "string",
+          "description": "The profile photo URL of the user."
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the moment."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional URL to an image stored in Firebase Storage."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the moment was created."
+        }
+      },
+      "required": [
+        "userId",
+        "userName",
+        "content",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "email"
+    ]
+  },
+  "firestore": {
+    "/moments/{momentId}": {
+      "schema": "Moment",
+      "description": "Collection of social moments shared by users."
+    }
+  }
+}
