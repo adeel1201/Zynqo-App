@@ -94,7 +94,7 @@ export default function ChatsPage() {
   };
 
   return (
-    <div className="flex flex-col animate-fade-in pb-20 min-h-screen bg-[#0E0C12]">
+    <div className="flex flex-col animate-fade-in pb-20 min-h-screen bg-background">
       <header className="sticky top-0 z-40 w-full glass-morphism safe-top px-4 h-[72px] flex items-center justify-between">
         <h1 className="text-2xl font-headline font-bold text-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Zynqo
@@ -122,7 +122,7 @@ export default function ChatsPage() {
       </header>
       
       {isSearching && (
-        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md px-4 py-3 flex items-center gap-2 border-b border-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md px-4 py-3 flex items-center gap-2 border-b border-border animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
@@ -130,7 +130,7 @@ export default function ChatsPage() {
               placeholder="Search conversations..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-11 pl-10 pr-10 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary text-sm"
+              className="h-11 pl-10 pr-10 bg-muted border-border rounded-2xl focus-visible:ring-primary text-sm"
             />
             {searchQuery && (
               <button 
@@ -151,7 +151,7 @@ export default function ChatsPage() {
         </div>
       )}
 
-      <div className="flex flex-col divide-y divide-white/5">
+      <div className="flex flex-col divide-y divide-border">
         {chatsLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="animate-spin text-primary/50" size={32} />
@@ -181,20 +181,20 @@ export default function ChatsPage() {
               <Link 
                 key={chat.id} 
                 href={`/chats/${chat.id}`}
-                className="flex items-center gap-4 p-4 hover:bg-white/5 transition-all active:bg-white/10 group"
+                className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-all active:bg-muted group"
               >
                 <div className="relative">
-                  <Avatar className="w-14 h-14 border border-white/5 shadow-xl">
+                  <Avatar className="w-14 h-14 border border-border shadow-sm">
                     <AvatarImage src={chatPhoto} />
                     <AvatarFallback className={isGroup ? "bg-primary/20 text-primary" : ""}>
                       {isGroup ? <Users size={24} /> : chatName[0]}
                     </AvatarFallback>
                   </Avatar>
                   {isOnline && (
-                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0E0C12]" />
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
                   )}
                   {isUnread && (
-                    <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-primary rounded-full border-2 border-[#0E0C12] animate-pulse" />
+                    <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-primary rounded-full border-2 border-white animate-pulse" />
                   )}
                 </div>
                 
@@ -231,8 +231,8 @@ export default function ChatsPage() {
           })
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center px-8">
-            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
-              <MessageSquare size={32} className="text-muted-foreground opacity-20" />
+            <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-4">
+              <MessageSquare size={32} className="text-muted-foreground opacity-40" />
             </div>
             <h4 className="font-bold text-lg mb-1">{searchQuery ? 'No results found' : 'No conversations yet'}</h4>
             <p className="text-xs text-muted-foreground">Start a new chat with your friends or create a group.</p>
@@ -271,7 +271,7 @@ export default function ChatsPage() {
               <UserPlus size={24} />
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-white/10 text-foreground rounded-[2rem] max-w-[90vw] sm:max-w-[400px] p-0 overflow-hidden">
+          <DialogContent className="bg-card border-border text-foreground rounded-[2rem] max-w-[90vw] sm:max-w-[400px] p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-0">
               <div className="flex items-center justify-between">
                 <DialogTitle className="font-headline text-xl font-bold text-center sm:text-left">New Chat</DialogTitle>
@@ -294,7 +294,7 @@ export default function ChatsPage() {
                   placeholder="Search by username..." 
                   value={userSearchQuery}
                   onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="h-10 pl-10 bg-white/5 border-white/5 rounded-xl text-xs focus-visible:ring-primary"
+                  className="h-10 pl-10 bg-muted border-border rounded-xl text-xs focus-visible:ring-primary"
                 />
               </div>
             </div>
@@ -311,14 +311,14 @@ export default function ChatsPage() {
                       key={u.uid}
                       href={`/users/${u.uid}`}
                       onClick={() => setIsNewChatOpen(false)}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 transition-colors text-left px-4 group"
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-muted transition-colors text-left px-4 group"
                     >
                       <div className="relative">
-                        <Avatar className="h-10 w-10 border border-white/5">
+                        <Avatar className="h-10 w-10 border border-border">
                           <AvatarImage src={u.profilePhoto} />
                           <AvatarFallback className="bg-primary/10 text-primary">{u.displayName?.[0]}</AvatarFallback>
                         </Avatar>
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-card rounded-full ${u.onlineStatus === 'online' ? 'bg-green-500' : 'bg-muted'}`} />
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-white rounded-full ${u.onlineStatus === 'online' ? 'bg-green-500' : 'bg-muted'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm group-hover:text-primary transition-colors truncate">{u.displayName}</h4>
@@ -331,8 +331,8 @@ export default function ChatsPage() {
                   ))
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 px-8 text-center">
-                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                      <Search size={20} className="text-muted-foreground opacity-20" />
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                      <Search size={20} className="text-muted-foreground opacity-40" />
                     </div>
                     <p className="text-xs text-muted-foreground font-medium">
                       {userSearchQuery ? `No users found matching "${userSearchQuery}"` : 'Try searching for a friend'}

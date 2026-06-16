@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -32,8 +31,8 @@ export default function LoginPage() {
       type: 'login',
       status,
       timestamp: serverTimestamp(),
-      deviceInfo: navigator.userAgent.split(')')[0].split('(')[1] || 'Web Browser',
-      ipAddress: 'Captured on server' // In production, usually handled by Cloud Functions
+      deviceInfo: typeof window !== 'undefined' ? navigator.userAgent : 'Unknown',
+      ipAddress: 'Captured on server'
     }).catch(() => {});
   };
 
@@ -62,9 +61,6 @@ export default function LoginPage() {
       if (error.code === 'auth/user-not-found') errorMessage = "No user found with this email.";
       if (error.code === 'auth/wrong-password') errorMessage = "Incorrect password.";
       
-      // If we have an email, try to log the failure if possible (might not have UID yet)
-      // For now, we only log successful login tracking via client for the specific user subcollection
-      
       toast({
         title: "Login Failed",
         description: errorMessage,
@@ -76,7 +72,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0E0C12] p-6 animate-fade-in">
+    <div className="flex flex-col min-h-screen bg-background p-6 animate-fade-in">
       <header className="py-4 flex items-center">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground rounded-full">
           <ChevronLeft size={24} />
@@ -90,19 +86,18 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm">Sign in to continue your journey</p>
         </div>
 
-        {/* Login Method Toggle */}
-        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+        <div className="flex bg-muted p-1 rounded-2xl border border-border">
           <button 
             type="button"
             onClick={() => setLoginMethod('email')}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'email' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground'}`}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'email' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground'}`}
           >
             Email
           </button>
           <button 
             type="button"
             onClick={() => setLoginMethod('phone')}
-            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'phone' ? 'bg-primary text-white shadow-lg' : 'text-muted-foreground'}`}
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${loginMethod === 'phone' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground'}`}
           >
             Phone
           </button>
@@ -121,7 +116,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com" 
-                    className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary" 
+                    className="h-14 pl-12 bg-muted/50 border-border rounded-2xl focus-visible:ring-primary" 
                     required
                   />
                 </div>
@@ -139,7 +134,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••" 
-                    className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary" 
+                    className="h-14 pl-12 bg-muted/50 border-border rounded-2xl focus-visible:ring-primary" 
                     required
                   />
                 </div>
@@ -151,7 +146,7 @@ export default function LoginPage() {
                 <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Phone Number</Label>
                 <div className="relative">
                   <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                  <Input id="phone" placeholder="+1 234 567 890" className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary" />
+                  <Input id="phone" placeholder="+1 234 567 890" className="h-14 pl-12 bg-muted/50 border-border rounded-2xl focus-visible:ring-primary" />
                 </div>
               </div>
             </div>
@@ -169,15 +164,15 @@ export default function LoginPage() {
         <div className="space-y-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="bg-white/10" />
+              <Separator className="bg-border" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
-              <span className="bg-[#0E0C12] px-4 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-4 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="h-14 rounded-2xl bg-white/5 border-white/5 hover:bg-white/10 font-bold text-sm">
+            <Button variant="outline" className="h-14 rounded-2xl border-border hover:bg-muted font-bold text-sm">
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -186,7 +181,7 @@ export default function LoginPage() {
               </svg>
               Google
             </Button>
-            <Button variant="outline" className="h-14 rounded-2xl bg-white/5 border-white/5 hover:bg-white/10 font-bold text-sm">
+            <Button variant="outline" className="h-14 rounded-2xl border-border hover:bg-muted font-bold text-sm">
               <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" fill="currentColor" />
               Facebook
             </Button>

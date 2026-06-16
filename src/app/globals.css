@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 260 25% 6%;
-    --foreground: 260 10% 98%;
-    --card: 260 25% 8%;
-    --card-foreground: 260 10% 98%;
-    --popover: 260 25% 7%;
-    --popover-foreground: 260 10% 98%;
+    --background: 0 0% 100%;
+    --foreground: 260 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 260 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 25% 10%;
     --primary: 266 89% 66%;
-    --primary-foreground: 266 10% 98%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 224 89% 66%;
-    --secondary-foreground: 224 10% 98%;
-    --muted: 260 20% 15%;
-    --muted-foreground: 260 10% 70%;
-    --accent: 266 89% 66%;
-    --accent-foreground: 266 10% 98%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 260 20% 96%;
+    --muted-foreground: 260 10% 45%;
+    --accent: 266 89% 96%;
+    --accent-foreground: 266 89% 40%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 260 20% 15%;
-    --input: 260 20% 15%;
+    --border: 260 20% 92%;
+    --input: 260 20% 92%;
     --ring: 266 89% 66%;
     --radius: 1rem;
   }
@@ -38,7 +38,7 @@
 }
 
 .glass-morphism {
-  @apply bg-card/60 backdrop-blur-xl border-t border-white/5;
+  @apply bg-white/80 backdrop-blur-xl border-b border-black/5;
 }
 
 .no-scrollbar::-webkit-scrollbar {

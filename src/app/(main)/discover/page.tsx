@@ -57,10 +57,7 @@ export default function DiscoverPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // --- Shared State ---
   const [activeTab, setActiveTab] = useState('moments');
-
-  // --- Moments Logic ---
   const [momentsLimit, setMomentsLimit] = useState(INITIAL_MOMENTS_LIMIT);
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -92,12 +89,11 @@ export default function DiscoverPage() {
     updateDoc(momentRef, {
       likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
     }).catch(async () => {
-      const permissionError = new FirestorePermissionError({
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: momentRef.path,
         operation: 'update',
         requestResourceData: { likes: isLiked ? 'arrayRemove' : 'arrayUnion' }
-      });
-      errorEmitter.emit('permission-error', permissionError);
+      }));
     });
   };
 
@@ -105,19 +101,15 @@ export default function DiscoverPage() {
     if (!db || !user) return;
     const momentRef = doc(db, 'moments', momentId);
     deleteDoc(momentRef)
-      .then(() => {
-        toast({ title: "Moment deleted" });
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
+      .then(() => toast({ title: "Moment deleted" }))
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: momentRef.path,
           operation: 'delete',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
+        } satisfies SecurityRuleContext));
       });
   };
 
-  // --- Nearby Logic ---
   const [nearbyLocation, setNearbyLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyError, setNearbyError] = useState<string | null>(null);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
@@ -135,7 +127,7 @@ export default function DiscoverPage() {
   const { data: channels = [], loading: channelsLoading } = useCollection(channelsQuery);
 
   const requestLocation = () => {
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setNearbyError("Geolocation not supported");
       return;
     }
@@ -188,11 +180,11 @@ export default function DiscoverPage() {
   }, [channels, nearbyLocation]);
 
   return (
-    <div className="flex flex-col animate-fade-in bg-[#0E0C12] min-h-screen pb-20">
+    <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-20">
       <AppHeader title="Discover" showSearch={false} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="sticky top-[72px] z-40 bg-[#0E0C12]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="sticky top-[72px] z-40 bg-background/80 backdrop-blur-xl border-b border-border">
           <TabsList className="w-full h-14 bg-transparent p-0 flex justify-center gap-8">
             <TabsTrigger 
               value="moments" 
@@ -221,13 +213,13 @@ export default function DiscoverPage() {
               <div 
                 key={moment.id} 
                 ref={isLast ? lastMomentRef : null}
-                className="bg-card rounded-[2rem] overflow-hidden border border-white/5 shadow-xl animate-fade-in"
+                className="bg-white rounded-[2rem] overflow-hidden border border-border shadow-sm animate-fade-in"
               >
                 <div className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10 border border-primary/20">
                       <AvatarImage src={moment.userPhoto} />
-                      <AvatarFallback>{moment.userName?.[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/5 text-primary">{moment.userName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="font-bold text-sm leading-none">{moment.userName}</h4>
@@ -252,11 +244,11 @@ export default function DiscoverPage() {
                   </div>
                 )}
                 {moment.videoUrl && (
-                  <div className="relative aspect-video w-full bg-black/40">
+                  <div className="relative aspect-video w-full bg-black">
                     <video src={moment.videoUrl} className="w-full h-full object-contain" controls />
                   </div>
                 )}
-                <div className="px-5 py-4 border-t border-white/5 flex items-center gap-6">
+                <div className="px-5 py-4 border-t border-border flex items-center gap-6">
                   <button onClick={() => handleToggleLike(moment.id, moment.likes)} className={cn("flex items-center gap-2 group transition-colors", isLiked ? "text-red-500" : "text-muted-foreground")}>
                     <Heart size={20} className={cn(isLiked && "fill-current")} />
                     <span className="text-xs font-bold">{moment.likes?.length || 0}</span>
@@ -279,7 +271,7 @@ export default function DiscoverPage() {
         <TabsContent value="nearby" className="m-0 p-4">
           {profile?.hideLocation ? (
             <div className="flex flex-col items-center justify-center py-20 text-center gap-6">
-              <div className="w-20 h-20 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-lg shadow-primary/5">
+              <div className="w-20 h-20 rounded-[2rem] bg-primary/5 flex items-center justify-center text-primary shadow-sm">
                 <Ghost size={40} />
               </div>
               <div className="space-y-2">
@@ -290,11 +282,11 @@ export default function DiscoverPage() {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="bg-card/40 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/5 flex flex-col items-center text-center gap-6 relative overflow-hidden">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-border flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-sm">
                 <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
                 <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 animate-ping rounded-full" />
-                  <div className="relative w-16 h-16 rounded-3xl bg-primary/20 flex items-center justify-center text-primary">
+                  <div className="absolute inset-0 bg-primary/10 animate-ping rounded-full" />
+                  <div className="relative w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary">
                     <Navigation size={32} className="animate-spin-slow" />
                   </div>
                 </div>
@@ -307,7 +299,7 @@ export default function DiscoverPage() {
                     <Shield size={12} className="mr-2" /> {nearbyError}
                   </Badge>
                 ) : nearbyLocation ? (
-                  <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                  <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-full border border-border">
                     <LocateFixed size={14} className="text-primary" />
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signal Locked</span>
                   </div>
@@ -320,11 +312,11 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2"><Users size={16} className="text-primary" /> People Nearby</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyUsers.map((u: any) => (
-                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-card/40 p-4 rounded-3xl border border-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-border hover:bg-muted/50 transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 rounded-2xl border border-primary/20">
                           <AvatarImage src={u.profilePhoto} />
-                          <AvatarFallback>{u.displayName?.[0]}</AvatarFallback>
+                          <AvatarFallback className="bg-primary/5 text-primary">{u.displayName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div>
                           <h4 className="font-bold text-sm">{u.displayName}</h4>
@@ -344,11 +336,11 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2"><Radio size={16} className="text-secondary" /> Local Channels</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyChannels.map((c: any) => (
-                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-secondary/5 p-4 rounded-3xl border border-secondary/10 hover:bg-secondary/10 transition-all cursor-pointer group">
+                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-secondary/5 p-4 rounded-3xl border border-secondary/10 hover:bg-secondary/10 transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 rounded-2xl border border-secondary/20 bg-secondary/10">
                           <AvatarImage src={c.photo} />
-                          <AvatarFallback><Radio size={20} /></AvatarFallback>
+                          <AvatarFallback className="text-secondary"><Radio size={20} /></AvatarFallback>
                         </Avatar>
                         <div>
                           <h4 className="font-bold text-sm">{c.name}</h4>
