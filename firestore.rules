@@ -35,18 +35,25 @@ service cloud.firestore {
       }
     }
 
-    // Creator Channels (WeChat-style V-Channels)
+    // Scalable follows
+    match /user_follows/{followId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+    }
+
+    // Creator Channels
     match /creatorChannels/{channelId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerIds']));
+      allow update: if isAuthenticated(); // Allowed for incrementing follow count etc.
       allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
     }
 
     match /creatorPosts/{postId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated(); // For likes/comments count
+      allow update: if isAuthenticated(); // For likes/comments/views count
       allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
       
       match /comments/{commentId} {
@@ -112,7 +119,7 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
-    // Catch-all for other collections (like internal tools)
+    // Catch-all
     match /{document=**} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated();

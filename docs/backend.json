@@ -123,7 +123,7 @@
         "avatar": { "type": "string" },
         "banner": { "type": "string" },
         "category": { "type": "string" },
-        "followerIds": { "type": "array", "items": { "type": "string" } },
+        "followerCount": { "type": "number" },
         "isVerified": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -141,11 +141,24 @@
         "mediaUrl": { "type": "string" },
         "caption": { "type": "string" },
         "likes": { "type": "array", "items": { "type": "string" } },
+        "likeCount": { "type": "number" },
         "commentsCount": { "type": "number" },
         "sharesCount": { "type": "number" },
+        "viewCount": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["creatorId", "type", "timestamp"]
+    },
+    "UserFollow": {
+      "title": "UserFollow",
+      "description": "A following relationship between users.",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string" },
+        "followingId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerId", "followingId", "createdAt"]
     },
     "SecurityLog": {
       "title": "SecurityLog",
@@ -263,6 +276,10 @@
     "/creatorPosts/{postId}/comments/{commentId}": {
       "schema": "Comment",
       "description": "Comments on a channel post."
+    },
+    "/user_follows/{followId}": {
+      "schema": "UserFollow",
+      "description": "Scalable follow relationships."
     }
   }
 }

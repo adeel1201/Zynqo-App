@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where, getDocs, increment } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -13,13 +13,10 @@ import {
   Plus, 
   Loader2, 
   Music2, 
-  MoreVertical,
-  ArrowLeft,
   Search,
   Zap,
   PlayCircle,
-  Trash2,
-  AlertCircle
+  Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -39,40 +36,42 @@ export default function VChannelsPage() {
   const [limitCount, setLimitCount] = useState(PAGE_SIZE);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Logic to find which channels the user follows
-  const followingChannelsQuery = useMemoFirebase(() => {
+  // Fetch following relationships
+  const followingQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
-      collection(db, 'creatorChannels'),
-      where('followerIds', 'array-contains', user.uid)
+      collection(db, 'user_follows'),
+      where('followerId', '==', user.uid)
     );
   }, [db, user?.uid]);
 
-  const { data: followedChannels = [] } = useCollection(followingChannelsQuery);
-  const followedCreatorIds = useMemo(() => followedChannels.map(c => c.creatorId), [followedChannels]);
+  const { data: follows = [] } = useCollection(followingQuery);
+  const followingIds = useMemo(() => follows.map(f => f.followingId), [follows]);
 
-  // Combined Query Logic
+  // Main Posts Query
   const postsQuery = useMemoFirebase(() => {
     if (!db) return null;
 
     if (feedType === 'following') {
-      if (followedCreatorIds.length === 0) return null;
-      // Firestore 'in' query is limited to 10 IDs. This is standard for MVP.
+      if (followingIds.length === 0) return null;
+      // Note: Firestore 'in' limit is 30 in modern versions, but we'll slice just in case for MVP
       return query(
         collection(db, 'creatorPosts'),
-        where('creatorId', 'in', followedCreatorIds.slice(0, 10)),
+        where('creatorId', 'in', followingIds.slice(0, 30)),
         orderBy('timestamp', 'desc'),
         limit(limitCount)
       );
     }
 
-    // For You Feed (Global Trending/Newest)
+    // For You Feed: Ordered byengagement (likes + timestamp)
+    // For simplicity, we order by likeCount and timestamp
     return query(
       collection(db, 'creatorPosts'),
+      orderBy('likeCount', 'desc'),
       orderBy('timestamp', 'desc'),
       limit(limitCount)
     );
-  }, [db, feedType, followedCreatorIds, limitCount]);
+  }, [db, feedType, followingIds, limitCount]);
 
   const { data: posts = [], loading } = useCollection(postsQuery);
 
@@ -89,7 +88,7 @@ export default function VChannelsPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black overflow-hidden relative">
-      {/* Header Overlay with Tabs */}
+      {/* Header Tabs */}
       <div className="absolute top-0 left-0 right-0 z-50 safe-top px-4 h-20 flex flex-col justify-center bg-gradient-to-b from-black/80 via-black/40 to-transparent">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-6">
@@ -101,7 +100,7 @@ export default function VChannelsPage() {
                )}
              >
                Following
-               {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full" />}
+               {feedType === 'following' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
              </button>
              <button 
                onClick={() => { setFeedType('for-you'); setLimitCount(PAGE_SIZE); }}
@@ -111,7 +110,7 @@ export default function VChannelsPage() {
                )}
              >
                For You
-               {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full" />}
+               {feedType === 'for-you' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-primary rounded-full shadow-[0_0_10px_#9f5ff5]" />}
              </button>
           </div>
           <div className="flex items-center gap-2">
@@ -142,17 +141,17 @@ export default function VChannelsPage() {
              </div>
              <div className="space-y-2">
                <h3 className="text-lg font-bold">
-                 {feedType === 'following' ? "No Following Content" : "No Broadcasts Yet"}
+                 {feedType === 'following' ? "No following content" : "No broadcasts yet"}
                </h3>
                <p className="text-sm text-muted-foreground leading-relaxed">
                  {feedType === 'following' 
                    ? "You haven't followed any creators yet. Explore 'For You' to find interesting channels!" 
-                   : "Channels content is currently empty. Be the first to share your broadcast!"}
+                   : "Be the first to share your broadcast with the Zynqo community."}
                </p>
              </div>
              <Button 
                onClick={() => feedType === 'following' ? setFeedType('for-you') : router.push('/v-channels/create')} 
-               className="rounded-full bg-primary px-8 h-12 font-bold"
+               className="rounded-full bg-primary px-8 h-12 font-bold shadow-xl shadow-primary/20"
              >
                {feedType === 'following' ? "Explore For You" : "Start Creating"}
              </Button>
@@ -185,35 +184,33 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
   const toggleLike = async () => {
     if (!db || !user) return;
     const postRef = doc(db, 'creatorPosts', post.id);
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    
     updateDoc(postRef, {
-      likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+      likes: newLiked ? arrayUnion(user.uid) : arrayRemove(user.uid),
+      likeCount: increment(newLiked ? 1 : -1)
     });
   };
 
   const handleVideoClick = () => {
     if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play();
-    }
+    if (isPlaying) videoRef.current.pause();
+    else videoRef.current.play();
     setIsPlaying(!isPlaying);
   };
 
   const handleDelete = async () => {
     if (!db || !user || user.uid !== post.creatorId) return;
-    const postRef = doc(db, 'creatorPosts', post.id);
-    deleteDoc(postRef)
-      .then(() => {
-        toast({ title: "Post removed" });
-      })
-      .catch(async (err) => {
-        const permissionError = new FirestorePermissionError({
-          path: postRef.path,
-          operation: 'delete'
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    try {
+      await deleteDoc(doc(db, 'creatorPosts', post.id));
+      toast({ title: "Post removed" });
+    } catch (err: any) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `creatorPosts/${post.id}`,
+        operation: 'delete'
+      }));
+    }
   };
 
   const isMe = user?.uid === post.creatorId;
@@ -246,10 +243,7 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
       {/* Interaction Bar */}
       <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-20">
         <div className="flex flex-col items-center gap-1">
-           <div 
-             onClick={() => router.push(`/v-channels/${post.creatorId}`)}
-             className="relative mb-4 cursor-pointer"
-           >
+           <div onClick={() => router.push(`/v-channels/${post.creatorId}`)} className="relative mb-4 cursor-pointer">
              <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
                 <AvatarImage src={post.creatorAvatar} />
                 <AvatarFallback>{post.creatorName?.[0]}</AvatarFallback>
