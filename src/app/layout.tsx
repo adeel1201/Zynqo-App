@@ -40,12 +40,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/icon-192.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#6A0DAD" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-body antialiased bg-background text-foreground selection:bg-primary/30 min-h-screen">
         <FirebaseClientProvider>
@@ -56,13 +55,13 @@ export default function RootLayout({
             <Toaster />
           </AuthProvider>
         </FirebaseClientProvider>
-        <Script id="register-sw" strategy="afterInteractive">
+        <Script id="register-pwa-sw" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                  console.log('Zynqo PWA: ServiceWorker registration successful');
-                }).catch(function(err) {
+                  console.log('Zynqo PWA: ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
                   console.log('Zynqo PWA: ServiceWorker registration failed: ', err);
                 });
               });
