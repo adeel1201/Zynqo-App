@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where, getDocs, increment } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/hooks/use-firebase';
+import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where, increment } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -13,9 +13,9 @@ import {
   Loader2, 
   Music2, 
   Search,
-  Zap,
   PlayCircle,
-  Trash2
+  Trash2,
+  Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ import Image from 'next/image';
 import { VCommentsDialog } from '@/components/zynqo/VCommentsDialog';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const PAGE_SIZE = 5;
 
@@ -35,7 +35,6 @@ export default function VChannelsPage() {
   const [limitCount, setLimitCount] = useState(PAGE_SIZE);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Fetch following relationships
   const followingQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
@@ -45,9 +44,8 @@ export default function VChannelsPage() {
   }, [db, user?.uid]);
 
   const { data: follows = [] } = useCollection(followingQuery);
-  const followingIds = useMemo(() => follows.map(f => f.followingId), [follows]);
+  const followingIds = useMemo(() => (follows as any[]).map(f => f.followingId), [follows]);
 
-  // Main Posts Query
   const postsQuery = useMemoFirebase(() => {
     if (!db) return null;
 
@@ -124,7 +122,8 @@ export default function VChannelsPage() {
             <VideoPostCard 
               key={post.id} 
               post={post} 
-              ref={posts.length === i + 1 ? lastPostRef : null} 
+              isLast={posts.length === i + 1}
+              onLastRef={lastPostRef}
             />
           ))
         ) : !loading ? (
@@ -144,7 +143,7 @@ export default function VChannelsPage() {
              </div>
              <Button 
                onClick={() => feedType === 'following' ? setFeedType('for-you') : router.push('/v-channels/create')} 
-               className="rounded-full bg-primary px-8 h-12 font-bold shadow-xl shadow-primary/20"
+               className="rounded-full bg-primary px-8 h-12 font-bold shadow-xl shadow-primary/20 text-white"
              >
                {feedType === 'following' ? "Explore For You" : "Start Creating"}
              </Button>
@@ -160,7 +159,7 @@ export default function VChannelsPage() {
   );
 }
 
-const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
+const VideoPostCard = ({ post, isLast, onLastRef }: { post: any, isLast: boolean, onLastRef: (node: HTMLDivElement | null) => void }) => {
   const { user } = useAuth();
   const db = useFirestore();
   const router = useRouter();
@@ -214,7 +213,7 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
   const isMe = user?.uid === post.creatorId;
 
   return (
-    <div ref={ref} className="h-screen w-full snap-start relative flex flex-col justify-center bg-white overflow-hidden">
+    <div ref={isLast ? onLastRef : null} className="h-screen w-full snap-start relative flex flex-col justify-center bg-white overflow-hidden">
       {post.type === 'video' ? (
         <video 
           ref={videoRef}
@@ -228,7 +227,7 @@ const VideoPostCard = ({ post, ref }: { post: any, ref?: any }) => {
         />
       ) : post.type === 'image' ? (
         <div className="relative w-full h-full bg-muted/20">
-           <Image src={post.mediaUrl} alt="Post" fill className="object-contain" />
+           <Image src={post.mediaUrl} alt="Post" fill className="object-contain" unoptimized />
         </div>
       ) : (
         <div className="h-full flex items-center justify-center p-12 bg-gradient-to-br from-primary/5 via-white to-secondary/5">

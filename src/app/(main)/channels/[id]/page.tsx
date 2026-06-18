@@ -13,29 +13,28 @@ import {
   Users, 
   ShieldCheck, 
   MoreVertical,
-  Image as ImageIcon,
   CheckCircle2,
   Bell
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  useFirestore, 
+  useFirestore,
   useStorage, 
   useDoc, 
   useCollection, 
   useMemoFirebase 
-} from '@/firebase';
-import { 
-  doc, 
-  collection, 
-  query, 
-  orderBy, 
-  addDoc, 
-  updateDoc, 
-  arrayUnion, 
-  arrayRemove, 
-  serverTimestamp 
-} from 'firebase/firestore';
+} from "@/hooks/use-firebase";
+import {
+  doc,
+  collection,
+  query,
+  orderBy,
+  addDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp
+} from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -54,7 +53,11 @@ export default function ChannelDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const channelRef = useMemoFirebase(() => (id && typeof id === 'string') ? doc(db, 'channels', id) : null, [db, id]);
+  const channelRef = useMemoFirebase(
+    () => (db && id && typeof id === 'string') ? doc(db, 'channels', id) : null,
+    [db, id]
+  );
+  
   const { data: channel, loading: channelLoading } = useDoc(channelRef);
 
   const postsQuery = useMemoFirebase(() => {
@@ -182,7 +185,6 @@ export default function ChannelDetailPage() {
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-32">
-        {/* Welcome Info */}
         <div className="flex flex-col items-center text-center py-10 px-6 bg-muted/30 rounded-[2.5rem] border border-dashed border-border">
            <Avatar className="w-20 h-20 mb-4 border-2 border-primary/20 rounded-3xl">
               <AvatarImage src={channel.photo} />
@@ -209,7 +211,9 @@ export default function ChannelDetailPage() {
                     {post.mediaType === 'video' ? (
                       <video src={post.mediaUrl} controls className="w-full h-full object-contain" />
                     ) : (
-                      <Image src={post.mediaUrl} alt="Channel Media" fill className="object-cover" />
+                      <div className="relative w-full aspect-video">
+                        <Image src={post.mediaUrl} alt="Channel Media" fill className="object-cover" unoptimized />
+                      </div>
                     )}
                   </div>
                 )}
