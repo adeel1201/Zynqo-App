@@ -65,8 +65,8 @@ export default function UserProfilePage() {
       } else {
         await setDoc(ref, {
           addedAt: serverTimestamp(),
-          displayName: targetProfile.displayName || 'User',
-          username: targetProfile.username || 'unknown'
+          displayName: (targetProfile as any).displayName || 'User',
+          username: (targetProfile as any).username || 'unknown'
         });
         toast({ title: "Added to contacts" });
       }
@@ -104,7 +104,7 @@ export default function UserProfilePage() {
         const newChat = await addDoc(chatsRef, {
           type: 'one-to-one',
           participantIds: [user.uid, id],
-          participantNames: [user.displayName || myProfile?.displayName || 'User', targetProfile.displayName || 'User'],
+          participantNames: [user.displayName || myProfile?.displayName || 'User', (targetProfile as any).displayName || 'User'],
           updatedAt: serverTimestamp(),
           createdAt: serverTimestamp(),
           lastMessage: {
@@ -137,8 +137,9 @@ export default function UserProfilePage() {
     </div>
   );
 
+  const profileData = targetProfile as any;
   const isMe = user?.uid === id;
-  const isOnline = targetProfile.onlineStatus === 'online';
+  const isOnline = profileData.onlineStatus === 'online';
 
   return (
     <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10">
@@ -158,19 +159,19 @@ export default function UserProfilePage() {
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <Avatar className="w-32 h-32 border-4 border-white shadow-xl">
-              <AvatarImage src={targetProfile.profilePhoto} />
+              <AvatarImage src={profileData.profilePhoto} />
               <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
-                {targetProfile.displayName?.[0]}
+                {profileData.displayName?.[0]}
               </AvatarFallback>
             </Avatar>
             {isOnline && <div className="absolute bottom-2 right-2 w-7 h-7 bg-green-500 border-4 border-white rounded-full shadow-lg" />}
           </div>
           <div className="text-center">
             <h3 className="text-2xl font-headline font-bold flex items-center justify-center gap-1.5 text-foreground">
-              {targetProfile.displayName}
-              {targetProfile.verified && <ShieldCheck size={18} className="text-primary" />}
+              {profileData.displayName}
+              {profileData.verified && <ShieldCheck size={18} className="text-primary" />}
             </h3>
-            <span className="text-xs text-primary font-bold tracking-widest uppercase">@{targetProfile.username}</span>
+            <span className="text-xs text-primary font-bold tracking-widest uppercase">@{profileData.username}</span>
           </div>
         </div>
       </div>
@@ -196,10 +197,10 @@ export default function UserProfilePage() {
         </div>
 
         <div className="bg-card rounded-[2rem] p-6 border border-border space-y-4 shadow-sm">
-          {targetProfile.bio && (
+          {profileData.bio && (
             <div className="space-y-1">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">About</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed italic">"{targetProfile.bio}"</p>
+              <p className="text-sm text-muted-foreground leading-relaxed italic">"{profileData.bio}"</p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4 pt-2">
@@ -207,14 +208,14 @@ export default function UserProfilePage() {
               <Globe size={16} className="text-primary/60" />
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase font-bold opacity-50">Location</span>
-                <span className="text-xs font-semibold text-foreground">{targetProfile.country || 'Not specified'}</span>
+                <span className="text-xs font-semibold text-foreground">{profileData.country || 'Not specified'}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar size={16} className="text-primary/60" />
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase font-bold opacity-50">Joined</span>
-                <span className="text-xs font-semibold text-foreground">{targetProfile.createdAt && typeof targetProfile.createdAt.seconds === 'number' ? new Date(targetProfile.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
+                <span className="text-xs font-semibold text-foreground">{profileData.createdAt && typeof profileData.createdAt.seconds === 'number' ? new Date(profileData.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
               </div>
             </div>
           </div>

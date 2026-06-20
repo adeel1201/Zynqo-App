@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Ensure we don't fail build on minor lint/ts warnings that don't break runtime
   eslint: {
     ignoreDuringBuilds: true,
   },

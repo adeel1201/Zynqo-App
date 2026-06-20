@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/hooks/use-firebase';
-import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, where, increment } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
+import { useAuth } from '@/context/AuthContext';
+import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove, where, increment } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -14,7 +15,6 @@ import {
   Music2, 
   Search,
   PlayCircle,
-  Trash2,
   Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -158,7 +158,6 @@ const VideoPostCard = ({ post, isLast, onLastRef }: { post: any, isLast: boolean
   const { user } = useAuth();
   const db = useFirestore();
   const router = useRouter();
-  const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
