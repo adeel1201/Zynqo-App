@@ -52,13 +52,11 @@ export default function UserProfilePage() {
   }, [contactData]);
 
   const toggleContact = async () => {
-    if (!user?.uid || !db || !id || !targetProfile) {
-      return;
-    }
+    if (!user?.uid || !db || !id || !targetProfile) return;
     
     setIsActionLoading(true);
     try {
-      const ref = doc(db, 'users', user.uid, 'contacts', id);
+      const ref = doc(db!, 'users', user.uid, 'contacts', id);
       if (isContact) {
         await deleteDoc(ref);
         toast({ title: "Removed from contacts" });
@@ -85,7 +83,7 @@ export default function UserProfilePage() {
     
     setIsActionLoading(true);
     try {
-      const chatsRef = collection(db, 'chats');
+      const chatsRef = collection(db!, 'chats');
       const q = query(
         chatsRef,
         where('type', '==', 'one-to-one'),

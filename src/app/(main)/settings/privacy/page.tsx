@@ -7,7 +7,7 @@ import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ChevronLeft, Shield, Ghost, Eye, Lock, UserX, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Shield, Ghost, Eye, Lock, UserX, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PrivacySettingsPage() {
@@ -77,7 +77,7 @@ export default function PrivacySettingsPage() {
               label="Read Receipts" 
               description="Let others know when you've seen their messages" 
               checked={privacy.readReceipts !== false} 
-              onCheckedChange={(val) => handleUpdatePrivacy('readReceipts', val)}
+              onCheckedChange={(val: boolean) => handleUpdatePrivacy('readReceipts', val)}
               disabled={isLoading}
             />
           </div>
