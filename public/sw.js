@@ -1,15 +1,24 @@
 const CACHE_NAME = 'zynqo-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
+];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Required fetch handler for PWA installability
-  // We prefer network-first or bypass for this social app to ensure real-time data
-  return;
+  // Simple fetch handler to satisfy PWA requirements
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
 });

@@ -5,8 +5,6 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 interface AuthContextType {
   user: User | null;
@@ -31,19 +29,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Presence logic
   useEffect(() => {
     if (!user || !db) return;
 
     const userRef = doc(db, 'users', user.uid);
     
-    // Set online on mount
     updateDoc(userRef, {
       onlineStatus: 'online',
       lastSeen: serverTimestamp()
-    }).catch((err) => {
-      console.error("Presence error", err);
-    });
+    }).catch(() => {});
 
     const handleVisibilityChange = () => {
       const status = document.visibilityState === 'visible' ? 'online' : 'away';
@@ -53,26 +47,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }).catch(() => {});
     };
 
-    const handleBeforeUnload = () => {
-      // Best effort to set offline
-      updateDoc(userRef, {
-        onlineStatus: 'offline',
-        lastSeen: serverTimestamp()
-      }).catch(() => {});
-    };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (db && user) {
-        updateDoc(doc(db, 'users', user.uid), {
-          onlineStatus: 'offline',
-          lastSeen: serverTimestamp()
-        }).catch(() => {});
-      }
     };
   }, [user, db]);
 
@@ -101,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile(null);
           }
           setLoading(false);
-        }, (error) => {
+        }, () => {
           setLoading(false);
         });
       } else {
@@ -116,6 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [auth, db]);
 
+  // Handle auth-based redirection strictly on the client
   useEffect(() => {
     if (!loading) {
       const publicPaths = ['/welcome', '/login', '/signup', '/forgot-password'];
@@ -131,7 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

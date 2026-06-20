@@ -12,7 +12,8 @@ import { collection, query, where, orderBy } from 'firebase/firestore';
 
 export default function ChannelsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const auth = useAuth();
+  const user = (auth as any)?.user ?? null;
   const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState('');
 

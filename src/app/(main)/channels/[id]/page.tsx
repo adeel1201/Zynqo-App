@@ -42,7 +42,8 @@ import Image from 'next/image';
 export default function ChannelDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const auth = useAuth();
+  const user = auth?.user ?? null;
   const db = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();

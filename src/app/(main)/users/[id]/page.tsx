@@ -3,7 +3,17 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, deleteDoc, serverTimestamp, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  serverTimestamp, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs 
+} from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
@@ -11,7 +21,6 @@ import {
   UserPlus, 
   UserMinus, 
   MessageSquare, 
-  MapPin, 
   Calendar,
   Loader2,
   Globe,
@@ -22,7 +31,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function UserProfilePage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
   const { user } = useAuth();
   const db = useFirestore();
   const router = useRouter();
@@ -31,10 +41,10 @@ export default function UserProfilePage() {
   const [isContact, setIsContact] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const userRef = useMemoFirebase(() => (id && typeof id === 'string') ? doc(db, 'users', id) : null, [db, id]);
+  const userRef = useMemoFirebase(() => (id && db) ? doc(db!, 'users', id) : null, [db, id]);
   const { data: targetProfile, loading: profileLoading } = useDoc(userRef);
 
-  const contactRef = useMemoFirebase(() => (user && id) ? doc(db, 'users', user.uid, 'contacts', id as string) : null, [db, user?.uid, id]);
+  const contactRef = useMemoFirebase(() => (user?.uid && id && db) ? doc(db!, 'users', user.uid, 'contacts', id) : null, [db, user?.uid, id]);
   const { data: contactData } = useDoc(contactRef);
 
   useEffect(() => {
@@ -42,10 +52,11 @@ export default function UserProfilePage() {
   }, [contactData]);
 
   const toggleContact = async () => {
-    if (!user || !id || !db || !targetProfile) return;
+    if (!user?.uid || !db || !id || !targetProfile) return;
+    
     setIsActionLoading(true);
     try {
-      const ref = doc(db, 'users', user.uid, 'contacts', id as string);
+      const ref = doc(db!, 'users', user.uid, 'contacts', id);
       if (isContact) {
         await deleteDoc(ref);
         toast({ title: "Removed from contacts" });
@@ -65,16 +76,22 @@ export default function UserProfilePage() {
   };
 
   const startChat = async () => {
-    if (!user || !id || !db || !targetProfile) return;
+    if (!user?.uid || !db || !id || !targetProfile) return;
+    
     setIsActionLoading(true);
     try {
-      const chatsRef = collection(db, 'chats');
-      const q = query(chatsRef, 
+      const chatsRef = collection(db!, 'chats');
+      const q = query(
+        chatsRef,
         where('type', '==', 'one-to-one'),
         where('participantIds', 'array-contains', user.uid)
       );
+      
       const querySnapshot = await getDocs(q);
-      const existingChat = querySnapshot.docs.find(d => d.data().participantIds.includes(id));
+      const existingChat = querySnapshot.docs.find(d => {
+        const data = d.data();
+        return data.participantIds && data.participantIds.includes(id);
+      });
 
       if (existingChat) {
         router.push(`/chats/${existingChat.id}`);
@@ -121,10 +138,12 @@ export default function UserProfilePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background animate-fade-in pb-10">
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl safe-top px-2 h-16 flex items-center justify-between border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground">
-          <ChevronLeft size={24} />
-        </Button>
-        <h2 className="font-bold text-lg text-foreground">Profile</h2>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-muted-foreground">
+            <ChevronLeft size={24} />
+          </Button>
+          <h2 className="font-bold text-lg text-foreground">Profile</h2>
+        </div>
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <MoreVertical size={20} />
         </Button>
@@ -190,7 +209,7 @@ export default function UserProfilePage() {
               <Calendar size={16} className="text-primary/60" />
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase font-bold opacity-50">Joined</span>
-                <span className="text-xs font-semibold text-foreground">{targetProfile.createdAt ? new Date(targetProfile.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
+                <span className="text-xs font-semibold text-foreground">{targetProfile.createdAt && typeof targetProfile.createdAt.seconds === 'number' ? new Date(targetProfile.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
               </div>
             </div>
           </div>
