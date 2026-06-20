@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Plus, Loader2, MessageSquare, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
+import { useAuth } from '@/context/AuthContext';
+import { useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
 import { collection, query, orderBy, limit, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -27,7 +28,6 @@ export default function MomentsPage() {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [limitCount, setLimitCount] = useState(INITIAL_PAGE_SIZE);
 
-  // Intersection Observer for Infinite Scrolling
   const observer = useRef<IntersectionObserver | null>(null);
 
   const momentsQuery = useMemoFirebase(() => {
@@ -139,7 +139,7 @@ export default function MomentsPage() {
                       alt="Moment Media" 
                       fill 
                       className="object-cover"
-                      data-ai-hint="lifestyle photography"
+                      unoptimized
                     />
                   </div>
                 ) : null}

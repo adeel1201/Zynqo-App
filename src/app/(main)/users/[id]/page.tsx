@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase } from '@/hooks/use-firebase';
 import { 
   doc, 
   setDoc, 
@@ -41,10 +41,10 @@ export default function UserProfilePage() {
   const [isContact, setIsContact] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const userRef = useMemoFirebase(() => (id && db) ? doc(db!, 'users', id) : null, [db, id]);
+  const userRef = useMemoFirebase(() => (id && db) ? doc(db, 'users', id) : null, [db, id]);
   const { data: targetProfile, loading: profileLoading } = useDoc(userRef);
 
-  const contactRef = useMemoFirebase(() => (user?.uid && id && db) ? doc(db!, 'users', user.uid, 'contacts', id) : null, [db, user?.uid, id]);
+  const contactRef = useMemoFirebase(() => (user?.uid && id && db) ? doc(db, 'users', user.uid, 'contacts', id) : null, [db, user?.uid, id]);
   const { data: contactData } = useDoc(contactRef);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function UserProfilePage() {
     
     setIsActionLoading(true);
     try {
-      const ref = doc(db!, 'users', user.uid, 'contacts', id);
+      const ref = doc(db, 'users', user.uid, 'contacts', id);
       if (isContact) {
         await deleteDoc(ref);
         toast({ title: "Removed from contacts" });
@@ -80,7 +80,7 @@ export default function UserProfilePage() {
     
     setIsActionLoading(true);
     try {
-      const chatsRef = collection(db!, 'chats');
+      const chatsRef = collection(db, 'chats');
       const q = query(
         chatsRef,
         where('type', '==', 'one-to-one'),
