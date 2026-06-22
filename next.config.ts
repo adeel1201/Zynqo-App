@@ -1,3 +1,4 @@
+git add .
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
