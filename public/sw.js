@@ -1,11 +1,14 @@
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+/**
+ * Zynqo PWA Service Worker
+ * Basic placeholder for offline support.
+ */
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+const CACHE_NAME = 'zynqo-cache-v1';
+
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installed');
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass-through fetch handler for PWA requirements
+  // Simple pass-through for now
 });
