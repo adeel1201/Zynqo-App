@@ -1,16 +1,18 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Removed output: 'export' to support standard dynamic routing and preview stability
   images: {
-    unoptimized: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-  }
-};
+      remotePatterns: [
+            {
+                    protocol: 'https',
+                            hostname: '**.googleapis.com',
+                                  },
+                                        {
+                                                protocol: 'https',
+                                                        hostname: '**.firebasestorage.app',
+                                                              },
+                                                                  ],
+                                                                    },
+                                                                    };
 
-export default nextConfig;
+                                                                    export default nextConfig;
