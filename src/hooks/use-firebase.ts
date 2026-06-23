@@ -22,20 +22,20 @@ export function useStorage(): FirebaseStorage {
 /**
  * Returns Auth + current user
  */
-export function useFirebaseAuth(): { user: User | null; loading: boolean } {
+export function useFirebaseAuth(): { user: User | null; auth: Auth; loading: boolean } {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const auth = getAuth(); // ← auth instance yahan ban gaya
 
   useEffect(() => {
-    const auth: Auth = getAuth();
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [auth]);
 
-  return { user, loading };
+  return { user, auth, loading }; // ← FIX: ab auth bhi return ho raha hai
 }
 
 /**
