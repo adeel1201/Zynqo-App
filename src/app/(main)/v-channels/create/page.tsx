@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useStorage, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, query, where } from 'firebase/firestore';
+import { useFirebaseAuth, useFirestore, useStorage, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
+import { collection, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +15,7 @@ import { Progress } from '@/components/ui/progress';
 
 export default function CreateChannelPostPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();
@@ -30,7 +29,7 @@ export default function CreateChannelPostPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const myChannelsQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db ||!user?.uid) return null;
     return query(collection(db, 'creatorChannels'), where('creatorId', '==', user.uid));
   }, [db, user?.uid]);
 
@@ -40,7 +39,7 @@ export default function CreateChannelPostPage() {
     if (!channelsLoading && myChannels.length === 0) {
       toast({ title: "Setup Required", description: "You need a channel profile to post broadcasts." });
       router.replace('/v-channels/setup');
-    } else if (myChannels.length > 0 && !targetChannelId) {
+    } else if (myChannels.length > 0 &&!targetChannelId) {
       setTargetChannelId(myChannels[0].id);
     }
   }, [myChannels, channelsLoading, router, toast, targetChannelId]);
@@ -59,7 +58,7 @@ export default function CreateChannelPostPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !db || !targetChannelId || (!selectedFile && !caption.trim())) return;
+    if (!user ||!db ||!targetChannelId || (!selectedFile &&!caption.trim())) return;
 
     if (!storage) {
       console.error("Firebase Storage not initialized. Check your environment variables.");
@@ -72,7 +71,7 @@ export default function CreateChannelPostPage() {
 
     setIsSubmitting(true);
     setUploadProgress(0);
-    
+
     try {
       let mediaUrl = '';
       let mediaType = 'text';
@@ -85,7 +84,7 @@ export default function CreateChannelPostPage() {
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
 
         await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
+          uploadTask.on('state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
               console.log(`Upload progress: ${progress.toFixed(2)}%`);
@@ -103,7 +102,7 @@ export default function CreateChannelPostPage() {
         });
 
         mediaUrl = await getDownloadURL(uploadTask.snapshot.ref);
-        mediaType = selectedFile.type.startsWith('video/') ? 'video' : 'image';
+        mediaType = selectedFile.type.startsWith('video/')? 'video' : 'image';
       }
 
       await addDoc(collection(db, 'creatorPosts'), {
@@ -153,29 +152,29 @@ export default function CreateChannelPostPage() {
 
       <form onSubmit={handleUpload} className="p-6 space-y-8">
         <div className="space-y-4">
-           {!previewUrl ? (
-             <div 
+           {!previewUrl? (
+             <div
                onClick={() => fileInputRef.current?.click()}
-               className="aspect-[9/16] w-full max-w-sm mx-auto flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[2.5rem] bg-muted/30 cursor-pointer hover:bg-muted transition-all gap-4 shadow-sm"
+               className="aspect-[9/16] w-full max-w-sm mx-auto flex-col items-center justify-center border-2 border-dashed border-border rounded- bg-muted/30 cursor-pointer hover:bg-muted transition-all gap-4 shadow-sm"
              >
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-sm">
                   <Video size={32} />
                 </div>
                 <div className="text-center px-6">
                   <p className="font-bold text-sm text-foreground">Tap to add Media</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">Optional: Video, Image, or Text</p>
+                  <p className="text- text-muted-foreground uppercase tracking-widest mt-2">Optional: Video, Image, or Text</p>
                 </div>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="video/*,image/*" className="hidden" />
              </div>
            ) : (
-             <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[2.5rem] overflow-hidden bg-black/5 border border-border shadow-lg group">
-                {selectedFile?.type.startsWith('video/') ? (
+             <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded- overflow-hidden bg-black/5 border-border shadow-lg group">
+                {selectedFile?.type.startsWith('video/')? (
                   <video src={previewUrl} className="w-full h-full object-contain" controls />
                 ) : (
-                  <Image src={previewUrl} alt="Preview" fill className="object-contain" />
+                  <Image src={previewUrl} alt="Preview" fill className="object-contain" unoptimized />
                 )}
-                <Button 
-                  type="button" variant="ghost" size="icon" 
+                <Button
+                  type="button" variant="ghost" size="icon"
                   onClick={() => { setPreviewUrl(null); setSelectedFile(null); }}
                   className="absolute top-4 right-4 bg-black/40 backdrop-blur-md rounded-full text-white z-20"
                 >
@@ -187,7 +186,7 @@ export default function CreateChannelPostPage() {
 
         <div className="space-y-6">
           <div className="space-y-2">
-             <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary">Post To Channel</label>
+             <label className="text- font-black uppercase tracking-widest ml-1 text-primary">Post To Channel</label>
              <Select value={targetChannelId} onValueChange={setTargetChannelId}>
                 <SelectTrigger className="h-14 bg-muted border-border rounded-2xl focus:ring-primary px-4">
                    <SelectValue placeholder="Select channel" />
@@ -206,9 +205,9 @@ export default function CreateChannelPostPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary">Broadcast Message</label>
-            <Textarea 
-              placeholder="What's on your mind?..." 
+            <label className="text- font-black uppercase tracking-widest ml-1 text-primary">Broadcast Message</label>
+            <Textarea
+              placeholder="What's on your mind?..."
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               className="min-h-[120px] bg-muted border-border rounded-2xl focus-visible:ring-primary p-4 text-sm resize-none text-foreground"
@@ -216,18 +215,18 @@ export default function CreateChannelPostPage() {
             />
           </div>
 
-          {isSubmitting ? (
+          {isSubmitting? (
             <div className="space-y-3">
               <Progress value={uploadProgress} className="h-2 bg-muted" />
-              <p className="text-center text-[10px] font-bold uppercase tracking-widest text-primary animate-pulse">
+              <p className="text-center text- font-bold uppercase tracking-widest text-primary animate-pulse">
                 Publishing... {Math.round(uploadProgress)}%
               </p>
             </div>
           ) : (
-            <Button 
+            <Button
               type="submit"
-              disabled={!selectedFile && !caption.trim()}
-              className="w-full h-16 rounded-[2rem] bg-primary hover:bg-primary/90 font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-95 text-white"
+              disabled={!selectedFile &&!caption.trim()}
+              className="w-full h-16 rounded- bg-primary hover:bg-primary/90 font-black text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transition-transform active:scale-95 text-white"
             >
               <Send size={24} />
               Publish Broadcast
