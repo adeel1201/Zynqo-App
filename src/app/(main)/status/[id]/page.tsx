@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemo } from '@/firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,19 +16,25 @@ export default function StatusViewPage() {
   const router = useRouter();
   const { user } = useAuth();
   const db = useFirestore();
-  
+
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const statusRef = useMemoFirebase(() => (id && typeof id === 'string') ? doc(db, 'statuses', id) : null, [db, id]);
-  const { data: status, loading } = useDoc(statusRef);
+  // ✅ FIX 1: useMemoFirebase ki jagah useMemo + db check
+  const statusRef = useMemo(() => {
+    if (!id || typeof id!== 'string' ||!db) return null;
+    return doc(db, 'statuses', id);
+  }, [db, id]);
+
+  // ✅ FIX 2: useDoc me null pass nahi karna, undefined do
+  const { data: status, loading } = useDoc(statusRef || undefined);
 
   // Check expiration
   useEffect(() => {
     if (status) {
-      const date = status.createdAt?.toDate ? status.createdAt.toDate() : new Date();
+      const date = status.createdAt?.toDate? status.createdAt.toDate() : new Date();
       const now = new Date();
       const diff = now.getTime() - date.getTime();
       if (diff > 24 * 60 * 60 * 1000) {
@@ -39,7 +45,7 @@ export default function StatusViewPage() {
 
   // Mark as viewed
   useEffect(() => {
-    if (status && user && db && !status.viewers?.includes(user.uid) && !isExpired) {
+    if (status && user && db && id && typeof id === 'string' &&!status.viewers?.includes(user.uid) &&!isExpired) {
       updateDoc(doc(db, 'statuses', id as string), {
         viewers: arrayUnion(user.uid)
       }).catch(() => {});
@@ -48,10 +54,10 @@ export default function StatusViewPage() {
 
   // Progress timer
   useEffect(() => {
-    if (loading || !status || isPaused || isExpired) return;
+    if (loading ||!status || isPaused || isExpired) return;
 
-    const duration = status.mediaType === 'video' ? 15000 : 5000; // 15s for video, 5s for image
-    const interval = 50; // update every 50ms
+    const duration = status.mediaType === 'video'? 15000 : 5000;
+    const interval = 50;
     const step = (interval / duration) * 100;
 
     timerRef.current = setInterval(() => {
@@ -96,22 +102,22 @@ export default function StatusViewPage() {
     </div>
   );
 
-  const date = status.createdAt?.toDate ? status.createdAt.toDate() : new Date();
+  const date = status.createdAt?.toDate? status.createdAt.toDate() : new Date();
 
   return (
     <div className="flex flex-col min-h-screen bg-black animate-fade-in relative overflow-hidden">
       {/* Progress Bar Container */}
       <div className="absolute top-0 left-0 right-0 z-50 p-2 safe-top bg-gradient-to-b from-black/60 to-transparent">
         <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary transition-all duration-75 ease-linear" 
-            style={{ width: `${progress}%` }} 
+          <div
+            className="h-full bg-primary transition-all duration-75 ease-linear"
+            style={{ width: `${progress}%` }}
           />
         </div>
-        
+
         <div className="flex items-center justify-between mt-4 px-2">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border border-white/20">
+            <Avatar className="h-10 w-10 border-white/20">
               <AvatarImage src={status.userPhoto} />
               <AvatarFallback>{status.userName?.[0]}</AvatarFallback>
             </Avatar>
@@ -123,16 +129,16 @@ export default function StatusViewPage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" size="icon" 
-              onClick={() => setIsPaused(!isPaused)} 
+            <Button
+              variant="ghost" size="icon"
+              onClick={() => setIsPaused(!isPaused)}
               className="text-white hover:bg-white/10 rounded-full"
             >
-              {isPaused ? <Play size={20} /> : <Pause size={20} />}
+              {isPaused? <Play size={20} /> : <Pause size={20} />}
             </Button>
-            <Button 
-              variant="ghost" size="icon" 
-              onClick={() => router.push('/status')} 
+            <Button
+              variant="ghost" size="icon"
+              onClick={() => router.push('/status')}
               className="text-white hover:bg-white/10 rounded-full"
             >
               <X size={20} />
@@ -142,25 +148,25 @@ export default function StatusViewPage() {
       </div>
 
       {/* Media Display */}
-      <div 
+      <div
         className="flex-1 relative flex items-center justify-center"
         onMouseDown={() => setIsPaused(true)}
         onMouseUp={() => setIsPaused(false)}
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
-        {status.mediaType === 'video' ? (
-          <video 
-            src={status.mediaUrl} 
-            className="w-full h-full object-contain cursor-pointer" 
-            autoPlay 
+        {status.mediaType === 'video'? (
+          <video
+            src={status.mediaUrl}
+            className="w-full h-full object-contain cursor-pointer"
+            autoPlay
             muted={false}
             playsInline
             onEnded={() => router.push('/status')}
           />
         ) : (
           <div className="relative w-full h-full">
-            <Image src={status.mediaUrl} alt="Status Update" fill className="object-contain" priority />
+            <Image src={status.mediaUrl} alt="Status Update" fill className="object-contain" priority unoptimized />
           </div>
         )}
 
@@ -176,7 +182,7 @@ export default function StatusViewPage() {
       {/* Footer / Viewers */}
       {status.userId === user?.uid && (
         <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom flex justify-center bg-gradient-to-t from-black/60 to-transparent">
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border-white/10">
             <span className="text-[10px] font-bold text-white uppercase tracking-widest">
               {status.viewers?.length || 0} Views
             </span>
