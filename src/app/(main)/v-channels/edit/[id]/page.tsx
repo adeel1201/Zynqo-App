@@ -1,11 +1,9 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useStorage, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { useFirebaseAuth, useFirestore, useStorage, useDoc, useMemoFirebase } from '@/hooks/use-firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,13 +16,13 @@ import { Progress } from '@/components/ui/progress';
 
 export default function EditChannelPage() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const storage = useStorage();
   const router = useRouter();
   const { toast } = useToast();
 
-  const channelRef = useMemoFirebase(() => (id && typeof id === 'string') ? doc(db, 'creatorChannels', id) : null, [db, id]);
+  const channelRef = useMemoFirebase(() => (id && typeof id === 'string')? doc(db, 'creatorChannels', id) : null, [db, id]);
   const { data: channel, loading } = useDoc(channelRef);
 
   const [formData, setFormData] = useState({
@@ -32,7 +30,7 @@ export default function EditChannelPage() {
     username: '',
     bio: ''
   });
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,7 +46,7 @@ export default function EditChannelPage() {
     }
   }, [channel]);
 
-  if (loading || !channel) {
+  if (loading ||!channel) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0E0C12]">
         <Loader2 className="animate-spin text-primary" size={32} />
@@ -57,14 +55,14 @@ export default function EditChannelPage() {
   }
 
   // Ensure only owner can edit
-  if (user?.uid !== channel.creatorId) {
+  if (user?.uid!== channel.creatorId) {
     router.push('/v-channels');
     return null;
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !storage || !db || !id) return;
+    if (!file ||!user ||!storage ||!db ||!id) return;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -80,6 +78,7 @@ export default function EditChannelPage() {
       },
       (error) => {
         setIsUploading(false);
+        console.error(error);
         toast({ title: "Upload failed", variant: "destructive" });
       },
       async () => {
@@ -93,7 +92,7 @@ export default function EditChannelPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !db || !id) return;
+    if (!user ||!db ||!id) return;
 
     setIsSaving(true);
     try {
@@ -106,6 +105,7 @@ export default function EditChannelPage() {
       toast({ title: "Channel updated successfully" });
       router.back();
     } catch (error: any) {
+      console.error(error);
       toast({ title: "Failed to save changes", variant: "destructive" });
     } finally {
       setIsSaving(false);
@@ -121,13 +121,13 @@ export default function EditChannelPage() {
           </Button>
           <h2 className="font-bold text-lg">Edit Channel</h2>
         </div>
-        <Button 
-          variant="ghost" 
-          onClick={handleSave} 
+        <Button
+          variant="ghost"
+          onClick={handleSave}
           disabled={isSaving}
           className="text-primary font-bold uppercase tracking-widest text-xs"
         >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : "Done"}
+          {isSaving? <Loader2 size={16} className="animate-spin" /> : "Done"}
         </Button>
       </header>
 
@@ -141,11 +141,11 @@ export default function EditChannelPage() {
               </AvatarFallback>
             </Avatar>
             <label className="absolute bottom-1 right-1 bg-primary text-white p-2.5 rounded-full cursor-pointer shadow-xl shadow-primary/30 hover:scale-110 transition-transform">
-              {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
-              <input 
-                type="file" 
+              {isUploading? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+              <input
+                type="file"
                 ref={fileInputRef}
-                className="hidden" 
+                className="hidden"
                 accept="image/*"
                 onChange={handlePhotoUpload}
                 disabled={isUploading}
@@ -158,48 +158,48 @@ export default function EditChannelPage() {
               <p className="text-[8px] text-center text-muted-foreground uppercase font-bold tracking-widest">Uploading...</p>
             </div>
           )}
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Channel Avatar</p>
+          <p className="text- font-bold uppercase tracking-widest text-muted-foreground">Channel Avatar</p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Channel Name</Label>
-            <Input 
+            <Label className="text- font-bold uppercase tracking-widest ml-1 opacity-70">Channel Name</Label>
+            <Input
               value={formData.name}
-              onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
+              onChange={(e) => setFormData(p => ({...p, name: e.target.value }))}
               className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Unique Handle</Label>
-            <Input 
+            <Label className="text- font-bold uppercase tracking-widest ml-1 opacity-70">Unique Handle</Label>
+            <Input
               value={formData.username}
-              onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
-              placeholder="username" 
+              onChange={(e) => setFormData(p => ({...p, username: e.target.value }))}
+              placeholder="username"
               className="h-14 bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1 opacity-70">Channel Bio</Label>
-            <Textarea 
+            <Label className="text- font-bold uppercase tracking-widest ml-1 opacity-70">Channel Bio</Label>
+            <Textarea
               value={formData.bio}
-              onChange={(e) => setFormData(p => ({ ...p, bio: e.target.value }))}
-              placeholder="What is your channel about?" 
+              onChange={(e) => setFormData(p => ({...p, bio: e.target.value }))}
+              placeholder="What is your channel about?"
               className="min-h-[120px] bg-white/5 border-white/5 rounded-2xl focus-visible:ring-primary p-4"
             />
           </div>
 
           <div className="pt-4">
-            <Button 
+            <Button
               type="submit"
               disabled={isSaving}
               className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-lg shadow-lg shadow-primary/20"
             >
-              {isSaving ? <Loader2 className="animate-spin" /> : (
+              {isSaving? <Loader2 className="animate-spin" /> : (
                 <>
                   <Save size={20} className="mr-2" />
                   Save Changes
