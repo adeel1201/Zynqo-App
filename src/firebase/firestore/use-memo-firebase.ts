@@ -4,20 +4,23 @@ import { useRef } from 'react';
 
 /**
  * A hook to stabilize a Firestore reference or query.
- * It only returns a new object if the dependencies have changed.
- * This is critical for useCollection and useDoc to avoid infinite re-render loops.
+ * Vercel safe version - never returns undefined/null on first render if last value exists.
  */
-export function useMemoFirebase<T>(factory: () => T, deps: any[]): T {
+export function useMemoFirebase<T>(factory: () => T | null, deps: any[]): T | null {
   const ref = useRef<T | null>(null);
   const depsRef = useRef<any[]>([]);
 
   const changed =
-    deps.length !== depsRef.current.length || deps.some((dep, i) => dep !== depsRef.current[i]);
+    deps.length!== depsRef.current.length ||
+    deps.some((dep, i) => dep!== depsRef.current[i]);
 
-  if (changed || ref.current === null) {
+  // Sirf tab naya ref banao jab saari dependencies valid hon
+  const allDepsValid = deps.every(dep => dep!== null && dep!== undefined);
+
+  if (allDepsValid && (changed || ref.current === null)) {
     ref.current = factory();
     depsRef.current = deps;
   }
 
-  return ref.current!;
+  return ref.current;
 }
