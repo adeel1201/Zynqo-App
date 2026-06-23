@@ -57,11 +57,11 @@ export default function StatusPage() {
         {/* User Status */}
         <div
           onClick={() => router.push('/status/create')}
-          className="flex items-center gap-4 bg-white p-4 rounded- border-border cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
+          className="flex items-center gap-4 bg-white p-4 rounded-xl border-border cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
         >
           <div className="relative">
             <Avatar className="w-16 h-16 border-2 border-dashed border-primary p-1">
-              <AvatarImage src={user?.profilePhoto || "https://picsum.photos/seed/me/100/100"} />
+              <AvatarImage src={user?.photoURL || "https://picsum.photos/seed/me/100/100"} />
               <AvatarFallback>{user?.displayName?.[0] || 'ME'}</AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white shadow-lg">
@@ -81,15 +81,15 @@ export default function StatusPage() {
 
         {/* Recent Updates */}
         <div className="flex flex-col gap-4">
-          <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Recent Updates</h4>
+          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Recent Updates</h4>
 
           {loading? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="animate-spin text-primary" size={24} />
-              <p className="text- font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing Stories...</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing Stories...</p>
             </div>
           ) : otherStatuses.length > 0? (
-            <div className="flex flex-col divide-y divide-border bg-white rounded- border-border overflow-hidden shadow-sm">
+            <div className="flex flex-col divide-y divide-border bg-white rounded-xl border-border overflow-hidden shadow-sm">
               {otherStatuses.map((story: any) => {
                 const hasSeen = story.viewers?.includes(user?.uid);
                 const date = story.createdAt?.toDate? story.createdAt.toDate() : new Date();
@@ -111,14 +111,14 @@ export default function StatusPage() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <div className="flex items-center gap-1">
                            {story.mediaType === 'video'? <PlayCircle size={10} className="text-primary" /> : <ImageIcon size={10} className="text-primary" />}
-                           <span className="text- text-muted-foreground font-medium uppercase tracking-widest">
+                           <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
                              {formatDistanceToNow(date, { addSuffix: true })}
                            </span>
                         </div>
                         <span className="text-muted-foreground/20">•</span>
                         <div className="flex items-center gap-1 text-primary/70">
                            <Clock size={10} />
-                           <span className="text- font-bold uppercase tracking-tighter">
+                           <span className="text-xs font-bold uppercase tracking-tighter">
                              {getExpiryText(story.createdAt)}
                            </span>
                         </div>
@@ -129,7 +129,7 @@ export default function StatusPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded- border-dashed border-border">
+            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-xl border-dashed border-border">
               <p className="text-xs text-muted-foreground font-medium">No recent updates from your friends.</p>
             </div>
           )}
