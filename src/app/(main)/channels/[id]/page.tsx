@@ -4,26 +4,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
-  Send, 
-  Plus, 
-  Loader2, 
-  Radio, 
-  Users, 
-  ShieldCheck, 
+import {
+  ChevronLeft,
+  Send,
+  Plus,
+  Loader2,
+  Radio,
+  Users,
+  ShieldCheck,
   MoreVertical,
   CheckCircle2,
   Bell
 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  useFirestore,
-  useStorage, 
-  useDoc, 
-  useCollection, 
-  useMemoFirebase 
-} from "@/hooks/use-firebase";
+import { useFirebaseAuth, useFirestore, useStorage, useDoc, useCollection, useMemoFirebase } from "@/hooks/use-firebase";
 import {
   doc,
   collection,
@@ -42,8 +35,7 @@ import Image from 'next/image';
 export default function ChannelDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const auth = useAuth();
-  const user = auth?.user ?? null;
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const storage = useStorage();
   const { toast } = useToast();
@@ -55,14 +47,14 @@ export default function ChannelDetailPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const channelRef = useMemoFirebase(
-    () => (db && id && typeof id === 'string') ? doc(db, 'channels', id) : null,
+    () => (db && id && typeof id === 'string')? doc(db, 'channels', id) : null,
     [db, id]
   );
-  
+
   const { data: channel, loading: channelLoading } = useDoc(channelRef);
 
   const postsQuery = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db ||!id) return null;
     return query(collection(db, 'channels', id as string, 'posts'), orderBy('timestamp', 'asc'));
   }, [db, id]);
 
@@ -78,7 +70,7 @@ export default function ChannelDetailPage() {
   }, [posts.length]);
 
   const handleJoinLeave = async () => {
-    if (!db || !user || !id) return;
+    if (!db ||!user ||!id) return;
     const ref = doc(db, 'channels', id as string);
     try {
       if (isFollowing) {
@@ -94,8 +86,8 @@ export default function ChannelDetailPage() {
   };
 
   const handlePost = async (mediaUrl?: string, mediaType?: string) => {
-    if (!db || !id || !user || (!inputText.trim() && !mediaUrl)) return;
-    
+    if (!db ||!id ||!user || (!inputText.trim() &&!mediaUrl)) return;
+
     setIsPosting(true);
     const postData = {
       content: inputText.trim(),
@@ -121,17 +113,17 @@ export default function ChannelDetailPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !id || !storage) return;
+    if (!file ||!user ||!id ||!storage) return;
 
     setIsUploading(true);
     const storageRef = ref(storage, `channels/${id}/broadcast_${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
-    uploadTask.on('state_changed', null, 
+    uploadTask.on('state_changed', null,
       (err) => { setIsUploading(false); toast({ title: "Upload failed" }); },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        const type = file.type.startsWith('video/') ? 'video' : 'image';
+        const type = file.type.startsWith('video/')? 'video' : 'image';
         await handlePost(url, type);
         setIsUploading(false);
       }
@@ -141,7 +133,7 @@ export default function ChannelDetailPage() {
   if (channelLoading || postsLoading) return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
       <Loader2 className="animate-spin text-primary" size={32} />
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-4 opacity-50">Syncing Broadcasts...</p>
+      <p className="text- font-bold uppercase tracking-widest text-muted-foreground mt-4 opacity-50">Syncing Broadcasts...</p>
     </div>
   );
 
@@ -160,7 +152,7 @@ export default function ChannelDetailPage() {
             <ChevronLeft size={24} />
           </Button>
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border border-primary/20 rounded-xl">
+            <Avatar className="h-10 w-10 border-primary/20 rounded-xl">
               <AvatarImage src={channel.photo} />
               <AvatarFallback><Radio size={20} /></AvatarFallback>
             </Avatar>
@@ -169,7 +161,7 @@ export default function ChannelDetailPage() {
                 {channel.name}
                 <ShieldCheck size={14} className="text-primary" />
               </h3>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mt-1 block">
+              <span className="text- font-bold uppercase tracking-widest text-muted-foreground mt-1 block">
                 {channel.followerIds?.length || 0} Followers
               </span>
             </div>
@@ -186,14 +178,14 @@ export default function ChannelDetailPage() {
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-32">
-        <div className="flex flex-col items-center text-center py-10 px-6 bg-muted/30 rounded-[2.5rem] border border-dashed border-border">
+        <div className="flex flex-col items-center text-center py-10 px-6 bg-muted/30 rounded- border-dashed border-border">
            <Avatar className="w-20 h-20 mb-4 border-2 border-primary/20 rounded-3xl">
               <AvatarImage src={channel.photo} />
               <AvatarFallback><Radio size={32} /></AvatarFallback>
            </Avatar>
            <h4 className="text-lg font-bold text-foreground">{channel.name}</h4>
            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{channel.description || 'Welcome to our official broadcast channel.'}</p>
-           <div className="mt-6 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-primary">
+           <div className="mt-6 flex items-center gap-4 text- font-bold uppercase tracking-widest text-primary">
               <span className="flex items-center gap-1"><Users size={12} /> {channel.followerIds?.length || 0}</span>
               <span className="w-1 h-1 bg-border rounded-full" />
               <span>Broadcast Channel</span>
@@ -201,15 +193,15 @@ export default function ChannelDetailPage() {
         </div>
 
         {posts.map((post: any) => {
-          const date = post.timestamp?.toDate ? post.timestamp.toDate() : new Date();
+          const date = post.timestamp?.toDate? post.timestamp.toDate() : new Date();
           const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
           return (
             <div key={post.id} className="flex flex-col items-start animate-fade-in">
-              <div className="max-w-[90%] bg-card border border-border rounded-2xl rounded-tl-none overflow-hidden shadow-sm">
+              <div className="max-w-[90%] bg-card border-border rounded-2xl rounded-tl-none overflow-hidden shadow-sm">
                 {post.mediaUrl && (
                   <div className="relative aspect-video w-full bg-black/5 min-w-[240px]">
-                    {post.mediaType === 'video' ? (
+                    {post.mediaType === 'video'? (
                       <video src={post.mediaUrl} controls className="w-full h-full object-contain" />
                     ) : (
                       <div className="relative w-full aspect-video">
@@ -224,7 +216,7 @@ export default function ChannelDetailPage() {
                   </div>
                 )}
                 <div className="px-4 pb-2 flex items-center justify-end gap-1.5 opacity-40">
-                   <span className="text-[9px] font-bold uppercase tracking-tighter text-foreground">{time}</span>
+                   <span className="text- font-bold uppercase tracking-tighter text-foreground">{time}</span>
                    <CheckCircle2 size={8} className="text-primary" />
                 </div>
               </div>
@@ -234,37 +226,37 @@ export default function ChannelDetailPage() {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-white via-white to-transparent pt-10">
-        {isAdmin ? (
-          <div className="flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded-[2rem] p-2 border border-border shadow-2xl">
+        {isAdmin? (
+          <div className="flex items-center gap-2 bg-card/60 backdrop-blur-2xl rounded- p-2 border-border shadow-2xl">
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,video/*" />
-            <Button 
+            <Button
               variant="ghost" size="icon" disabled={isUploading}
               onClick={() => fileInputRef.current?.click()}
               className="text-muted-foreground rounded-full h-10 w-10 hover:bg-primary/10 hover:text-primary"
             >
-              {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} />}
+              {isUploading? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} />}
             </Button>
-            <input 
+            <input
               type="text" placeholder="Broadcast a message..." value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handlePost())}
+              onKeyDown={(e) => e.key === 'Enter' &&!e.shiftKey && (e.preventDefault(), handlePost())}
               className="flex-1 bg-transparent border-none outline-none text-sm px-2 font-medium text-foreground"
             />
-            <Button 
-              onClick={() => handlePost()} 
-              disabled={isPosting || (!inputText.trim() && !isUploading)}
+            <Button
+              onClick={() => handlePost()}
+              disabled={isPosting || (!inputText.trim() &&!isUploading)}
               className="rounded-full bg-primary h-10 w-10 shadow-lg shadow-primary/20"
               size="icon"
             >
-              {isPosting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+              {isPosting? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
             </Button>
           </div>
         ) : (
-          <Button 
+          <Button
             onClick={handleJoinLeave}
-            className={`w-full h-14 rounded-2xl font-bold text-lg shadow-xl transition-all ${isFollowing ? 'bg-muted border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive' : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'}`}
+            className={`w-full h-14 rounded-2xl font-bold text-lg shadow-xl transition-all ${isFollowing? 'bg-muted border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive' : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'}`}
           >
-            {isFollowing ? 'Leave Channel' : 'Join Channel'}
+            {isFollowing? 'Leave Channel' : 'Join Channel'}
           </Button>
         )}
       </div>
