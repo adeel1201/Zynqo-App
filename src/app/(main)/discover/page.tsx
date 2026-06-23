@@ -4,17 +4,16 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { AppHeader } from '@/components/zynqo/AppHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, 
-  Users, 
-  Search, 
-  Radio, 
-  Heart, 
-  Sparkles, 
-  Loader2, 
+import {
+  MapPin,
+  Users,
+  Search,
+  Radio,
+  Heart,
+  Sparkles,
+  Loader2,
   MessageSquare,
   Navigation,
   ChevronRight,
@@ -26,16 +25,13 @@ import {
   PlayCircle,
   Image as ImageIcon
 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
+import { useFirebaseAuth, useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
 import { collection, query, where, limit, orderBy, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { CommentsDialog } from '@/components/zynqo/CommentsDialog';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
 
 // Distance calculation
@@ -52,7 +48,7 @@ const INITIAL_MOMENTS_LIMIT = 5;
 const MOMENTS_INCREMENT = 5;
 
 export default function DiscoverPage() {
-  const { user, profile } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -83,30 +79,25 @@ export default function DiscoverPage() {
   }, [momentsLoading, hasMoreMoments]);
 
   const handleToggleLike = (momentId: string, currentLikes: string[] = []) => {
-    if (!db || !user) return;
+    if (!db ||!user) return;
     const momentRef = doc(db, 'moments', momentId);
     const isLiked = currentLikes.includes(user.uid);
     updateDoc(momentRef, {
-      likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
-    }).catch(async () => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: momentRef.path,
-        operation: 'update',
-        requestResourceData: { likes: isLiked ? 'arrayRemove' : 'arrayUnion' }
-      }));
+      likes: isLiked? arrayRemove(user.uid) : arrayUnion(user.uid)
+    }).catch((err) => {
+      console.error('Like error:', err);
+      toast({ title: "Failed to update like", variant: "destructive" });
     });
   };
 
   const handleDeleteMoment = (momentId: string) => {
-    if (!db || !user) return;
+    if (!db ||!user) return;
     const momentRef = doc(db, 'moments', momentId);
     deleteDoc(momentRef)
-      .then(() => toast({ title: "Moment deleted" }))
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: momentRef.path,
-          operation: 'delete',
-        }));
+   .then(() => toast({ title: "Moment deleted" }))
+   .catch((err) => {
+        console.error('Delete error:', err);
+        toast({ title: "Delete failed", variant: "destructive" });
       });
   };
 
@@ -127,7 +118,7 @@ export default function DiscoverPage() {
   const { data: channels = [], loading: channelsLoading } = useCollection(channelsQuery);
 
   const requestLocation = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    if (typeof navigator === 'undefined' ||!navigator.geolocation) {
       setNearbyError("Geolocation not supported");
       return;
     }
@@ -137,7 +128,7 @@ export default function DiscoverPage() {
         const { latitude, longitude } = pos.coords;
         setNearbyLocation({ lat: latitude, lng: longitude });
         setNearbyError(null);
-        if (user && db && !profile?.hideLocation) {
+        if (user && db) {
           updateDoc(doc(db, 'users', user.uid), {
             latitude, longitude, lastLocationUpdate: serverTimestamp()
           }).catch(() => {});
@@ -152,49 +143,49 @@ export default function DiscoverPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'nearby' && !profile?.hideLocation && !nearbyLocation) {
+    if (activeTab === 'nearby' &&!nearbyLocation) {
       requestLocation();
     }
-  }, [activeTab, profile?.hideLocation]);
+  }, [activeTab, nearbyLocation]);
 
   const nearbyUsers = useMemo(() => {
     if (!nearbyLocation) return [];
     return allUsers
-      .filter((u: any) => u.uid !== user?.uid && u.latitude && u.longitude)
-      .map((u: any) => ({
-        ...u,
+   .filter((u: any) => u.uid!== user?.uid && u.latitude && u.longitude)
+   .map((u: any) => ({
+       ...u,
         distance: getDistance(nearbyLocation.lat, nearbyLocation.lng, u.latitude, u.longitude)
       }))
-      .sort((a, b) => a.distance - b.distance);
+   .sort((a, b) => a.distance - b.distance);
   }, [allUsers, nearbyLocation, user?.uid]);
 
   const nearbyChannels = useMemo(() => {
     if (!nearbyLocation) return [];
     return channels
-      .filter((c: any) => c.latitude && c.longitude)
-      .map((c: any) => ({
-        ...c,
+   .filter((c: any) => c.latitude && c.longitude)
+   .map((c: any) => ({
+       ...c,
         distance: getDistance(nearbyLocation.lat, nearbyLocation.lng, c.latitude, c.longitude)
       }))
-      .sort((a, b) => a.distance - b.distance);
+   .sort((a, b) => a.distance - b.distance);
   }, [channels, nearbyLocation]);
 
   return (
     <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-20">
       <AppHeader title="Discover" showSearch={false} />
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="sticky top-[72px] z-40 bg-white/80 backdrop-blur-xl border-b border-border">
           <TabsList className="w-full h-14 bg-transparent p-0 flex justify-center gap-8">
-            <TabsTrigger 
-              value="moments" 
+            <TabsTrigger
+              value="moments"
               className="bg-transparent border-none text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold uppercase tracking-widest text-[10px] relative transition-all"
             >
               Moments
               {activeTab === 'moments' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(159,95,245,0.3)]" />}
             </TabsTrigger>
-            <TabsTrigger 
-              value="nearby" 
+            <TabsTrigger
+              value="nearby"
               className="bg-transparent border-none text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-transparent font-bold uppercase tracking-widest text-[10px] relative transition-all"
             >
               Nearby
@@ -210,26 +201,26 @@ export default function DiscoverPage() {
             const isMe = moment.userId === user?.uid;
 
             return (
-              <div 
-                key={moment.id} 
-                ref={isLast ? lastMomentRef : null}
-                className="bg-card rounded-[2rem] overflow-hidden border border-border shadow-sm animate-fade-in"
+              <div
+                key={moment.id}
+                ref={isLast? lastMomentRef : null}
+                className="bg-card rounded-[2rem] overflow-hidden border-border shadow-sm animate-fade-in"
               >
                 <div className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10 border border-primary/20">
+                    <Avatar className="w-10 h-10 border-primary/20">
                       <AvatarImage src={moment.userPhoto} />
-                      <AvatarFallback className="bg-primary/5 text-primary">{moment.userName?.[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/5 text-primary">{moment.userName?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h4 className="font-bold text-sm leading-none text-foreground">{moment.userName}</h4>
-                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
-                        {moment.createdAt?.toDate ? formatDistanceToNow(moment.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
+                      <span className="text- text-muted-foreground font-bold uppercase tracking-widest mt-1 block">
+                        {moment.createdAt?.toDate? formatDistanceToNow(moment.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
                       </span>
                     </div>
                   </div>
                   {isMe && (
-                    <button 
+                    <button
                       onClick={() => handleDeleteMoment(moment.id)}
                       className="p-2 text-muted-foreground hover:text-destructive transition-colors"
                     >
@@ -249,7 +240,7 @@ export default function DiscoverPage() {
                   </div>
                 )}
                 <div className="px-5 py-4 border-t border-border flex items-center gap-6">
-                  <button onClick={() => handleToggleLike(moment.id, moment.likes)} className={cn("flex items-center gap-2 group transition-colors", isLiked ? "text-red-500" : "text-muted-foreground")}>
+                  <button onClick={() => handleToggleLike(moment.id, moment.likes)} className={cn("flex items-center gap-2 group transition-colors", isLiked? "text-red-500" : "text-muted-foreground")}>
                     <Heart size={20} className={cn(isLiked && "fill-current")} />
                     <span className="text-xs font-bold">{moment.likes?.length || 0}</span>
                   </button>
@@ -262,27 +253,26 @@ export default function DiscoverPage() {
             );
           })}
           {momentsLoading && <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-primary" size={24} /></div>}
-          {!hasMoreMoments && moments.length > 0 && <p className="text-center text-[10px] text-muted-foreground uppercase font-black opacity-30 py-4">No more moments</p>}
+          {!hasMoreMoments && moments.length > 0 && <p className="text-center text- text-muted-foreground uppercase font-black opacity-30 py-4">No more moments</p>}
           <Button onClick={() => router.push('/moments/create')} className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-50 transition-transform active:scale-90" size="icon">
             <Plus size={24} className="text-white" />
           </Button>
         </TabsContent>
 
         <TabsContent value="nearby" className="m-0 p-4">
-          {profile?.hideLocation ? (
+          {!nearbyLocation &&!nearbyError? (
             <div className="flex flex-col items-center justify-center py-20 text-center gap-6">
-              <div className="w-20 h-20 rounded-[2rem] bg-primary/5 flex items-center justify-center text-primary shadow-sm">
-                <Ghost size={40} />
+              <div className="w-20 h-20 rounded- bg-primary/5 flex items-center justify-center text-primary shadow-sm">
+                <LocateFixed size={40} />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-bold text-foreground">Ghost Mode Active</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed px-8">Enable location sharing in your profile settings to see people nearby.</p>
+                <h3 className="text-lg font-bold text-foreground">Finding Location...</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed px-8">Please allow location access to see people nearby.</p>
               </div>
-              <Button onClick={() => router.push('/profile/edit')} className="rounded-2xl bg-primary text-white">Settings</Button>
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="bg-card p-6 rounded-[2.5rem] border border-border flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-sm">
+              <div className="bg-card p-6 rounded- border-border flex-col items-center text-center gap-6 relative overflow-hidden shadow-sm">
                 <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/10 animate-ping rounded-full" />
@@ -292,16 +282,16 @@ export default function DiscoverPage() {
                 </div>
                 <div className="space-y-1">
                   <h2 className="text-xl font-headline font-bold text-foreground">Discovery Radar</h2>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Scanning for social energy nearby</p>
+                  <p className="text- text-muted-foreground uppercase tracking-widest font-black opacity-60">Scanning for social energy nearby</p>
                 </div>
-                {nearbyError ? (
+                {nearbyError? (
                   <Badge variant="destructive" className="bg-destructive/10 text-destructive border-none px-4 py-1">
                     <Shield size={12} className="mr-2" /> {nearbyError}
                   </Badge>
-                ) : nearbyLocation ? (
-                  <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-full border border-border">
+                ) : nearbyLocation? (
+                  <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-full border-border">
                     <LocateFixed size={14} className="text-primary" />
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signal Locked</span>
+                    <span className="text- font-bold text-muted-foreground uppercase tracking-widest">Signal Locked</span>
                   </div>
                 ) : (
                   <Loader2 className="animate-spin text-primary" size={24} />
@@ -312,23 +302,23 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Users size={16} className="text-primary" /> People Nearby</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyUsers.map((u: any) => (
-                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-card p-4 rounded-3xl border border-border hover:bg-muted transition-all cursor-pointer group shadow-sm">
+                    <div key={u.uid} onClick={() => router.push(`/users/${u.uid}`)} className="flex items-center justify-between bg-card p-4 rounded-3xl border-border hover:bg-muted transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
-                        <Avatar className="h-14 w-14 rounded-2xl border border-primary/20">
+                        <Avatar className="h-14 w-14 rounded-2xl border-primary/20">
                           <AvatarImage src={u.profilePhoto} />
-                          <AvatarFallback className="bg-primary/5 text-primary">{u.displayName?.[0]}</AvatarFallback>
+                          <AvatarFallback className="bg-primary/5 text-primary">{u.displayName?.[0] || 'U'}</AvatarFallback>
                         </Avatar>
                         <div>
                           <h4 className="font-bold text-sm text-foreground">{u.displayName}</h4>
-                          <span className="text-[10px] text-primary font-bold uppercase tracking-wider mt-1 block">
-                            {u.distance < 1 ? `${Math.round(u.distance * 1000)}m away` : `${u.distance.toFixed(1)}km away`}
+                          <span className="text- text-primary font-bold uppercase tracking-wider mt-1 block">
+                            {u.distance < 1? `${Math.round(u.distance * 1000)}m away` : `${u.distance.toFixed(1)}km away`}
                           </span>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-muted-foreground/30 group-hover:text-primary transition-colors" />
                     </div>
                   ))}
-                  {nearbyUsers.length === 0 && !usersLoading && <p className="text-center py-10 text-xs text-muted-foreground italic">No users found within range.</p>}
+                  {nearbyUsers.length === 0 &&!usersLoading && <p className="text-center py-10 text-xs text-muted-foreground italic">No users found within range.</p>}
                 </div>
               </section>
 
@@ -336,23 +326,23 @@ export default function DiscoverPage() {
                 <h3 className="font-headline font-bold text-lg px-2 flex items-center gap-2 text-foreground"><Radio size={16} className="text-secondary" /> Local Channels</h3>
                 <div className="flex flex-col gap-3">
                   {nearbyChannels.map((c: any) => (
-                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-border hover:bg-secondary/5 transition-all cursor-pointer group shadow-sm">
+                    <div key={c.id} onClick={() => router.push(`/channels/${c.id}`)} className="flex items-center justify-between bg-white p-4 rounded-3xl border-border hover:bg-secondary/5 transition-all cursor-pointer group shadow-sm">
                       <div className="flex items-center gap-4">
-                        <Avatar className="h-14 w-14 rounded-2xl border border-secondary/20 bg-secondary/10">
+                        <Avatar className="h-14 w-14 rounded-2xl border-secondary/20 bg-secondary/10">
                           <AvatarImage src={c.photo} />
                           <AvatarFallback className="text-secondary"><Radio size={20} /></AvatarFallback>
                         </Avatar>
                         <div>
                           <h4 className="font-bold text-sm text-foreground">{c.name}</h4>
-                          <span className="text-[10px] text-secondary font-bold uppercase tracking-wider mt-1 block">
-                            {c.distance < 1 ? `${Math.round(c.distance * 1000)}m away` : `${c.distance.toFixed(1)}km away`}
+                          <span className="text- text-secondary font-bold uppercase tracking-wider mt-1 block">
+                            {c.distance < 1? `${Math.round(c.distance * 1000)}m away` : `${c.distance.toFixed(1)}km away`}
                           </span>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-secondary/30 group-hover:text-secondary transition-colors" />
                     </div>
                   ))}
-                  {nearbyChannels.length === 0 && !channelsLoading && <p className="text-center py-10 text-xs text-muted-foreground italic">No local channels found.</p>}
+                  {nearbyChannels.length === 0 &&!channelsLoading && <p className="text-center py-10 text-xs text-muted-foreground italic">No local channels found.</p>}
                 </div>
               </section>
             </div>
@@ -361,10 +351,10 @@ export default function DiscoverPage() {
       </Tabs>
 
       {selectedMomentId && (
-        <CommentsDialog 
-          momentId={selectedMomentId} 
-          isOpen={isCommentsOpen} 
-          onOpenChange={setIsCommentsOpen} 
+        <CommentsDialog
+          momentId={selectedMomentId}
+          isOpen={isCommentsOpen}
+          onOpenChange={setIsCommentsOpen}
         />
       )}
     </div>
