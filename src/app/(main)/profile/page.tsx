@@ -1,18 +1,17 @@
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
-import { useAuth as useZynqoAuth } from '@/context/AuthContext';
-import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebaseAuth, useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { 
-  User, 
-  Settings, 
-  Lock, 
-  Bell, 
-  Database, 
-  HelpCircle, 
-  LogOut, 
+import {
+  User,
+  Settings,
+  Lock,
+  Bell,
+  Database,
+  HelpCircle,
+  LogOut,
   Edit3,
   Globe,
   QrCode,
@@ -28,15 +27,14 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
-  const { user, profile, loading: authLoading } = useZynqoAuth();
-  const auth = useAuth();
+  const { user, loading: authLoading } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
   // Fetch my channels from creatorChannels collection
   const myChannelsQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db ||!user?.uid) return null;
     return query(collection(db, 'creatorChannels'), where('creatorId', '==', user.uid));
   }, [db, user?.uid]);
 
@@ -50,24 +48,24 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return null;
   }
 
   const handleSignOut = async () => {
-    if (!auth) return;
     try {
-      await signOut(auth);
+      await signOut(user.auth);
       router.push('/welcome');
     } catch (error) {
       console.error("Sign out error", error);
+      toast({ title: "Sign out failed", variant: "destructive" });
     }
   };
 
   const handleCreateChannel = () => {
     if (myChannels.length >= 3) {
-      toast({ 
-        title: "Limit Reached", 
+      toast({
+        title: "Limit Reached",
         description: "You can only own up to 3 channels.",
         variant: "destructive"
       });
@@ -78,28 +76,32 @@ export default function ProfilePage() {
 
   const formatJoinedDate = (timestamp: any) => {
     if (!timestamp) return 'Recently';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = timestamp.toDate? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString([], { month: 'short', year: 'numeric' });
   };
+
+  const displayName = user.displayName || 'User';
+  const username = user.email?.split('@')[0] || 'user';
+  const photoURL = user.photoURL || '';
 
   return (
     <div className="flex flex-col animate-fade-in bg-white min-h-screen pb-24">
       <AppHeader title="Me" showActions={false} showSearch={false} />
-      
+
       {/* Profile Header */}
       <div className="p-6 flex items-center gap-4 bg-muted/20 border-b border-border">
         <div className="relative">
           <Avatar className="w-20 h-20 border-2 border-primary/20 shadow-xl bg-white">
-            <AvatarImage src={profile.profilePhoto} />
+            <AvatarImage src={photoURL} />
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-              {profile.displayName?.[0]}
+              {displayName?.[0] || 'U'}
             </AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-headline font-bold truncate text-foreground">{profile.displayName}</h2>
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">@{profile.username}</p>
-          <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
+          <h2 className="text-xl font-headline font-bold truncate text-foreground">{displayName}</h2>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">@{username}</p>
+          <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 text- font-black uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
             <Edit3 size={12} />
             Edit Profile
           </Link>
@@ -113,22 +115,22 @@ export default function ProfilePage() {
         {/* Content Creator Section */}
         <section className="space-y-3">
           <div className="flex items-center justify-between ml-2">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
+            <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
             <span className="text-[9px] font-black text-primary/40">{myChannels.length}/3 Channels</span>
           </div>
-          <div className="bg-white rounded-[2rem] border border-border overflow-hidden shadow-sm">
-            {channelsLoading ? (
+          <div className="bg-white rounded- border-border overflow-hidden shadow-sm">
+            {channelsLoading? (
               <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-primary/30" size={20} /></div>
-            ) : myChannels.length > 0 ? (
+            ) : myChannels.length > 0? (
               <>
                 {myChannels.map((channel: any) => (
-                  <Link 
-                    key={channel.id} 
+                  <Link
+                    key={channel.id}
                     href={`/v-channels/${channel.id}`}
                     className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors border-b border-border last:border-none"
                   >
                     <div className="flex items-center gap-4">
-                      <Avatar className="w-10 h-10 rounded-xl border border-primary/20">
+                      <Avatar className="w-10 h-10 rounded-xl border-primary/20">
                         <AvatarImage src={channel.avatar} />
                         <AvatarFallback><PlayCircle size={20} /></AvatarFallback>
                       </Avatar>
@@ -156,7 +158,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-foreground">Create Video Channel</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
+                    <p className="text- text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground/30" />
@@ -167,8 +169,8 @@ export default function ProfilePage() {
 
         {/* Regular Settings */}
         <section className="space-y-3">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
-          <div className="bg-white rounded-[2.5rem] border border-border overflow-hidden shadow-sm">
+          <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
+          <div className="bg-white rounded- border-border overflow-hidden shadow-sm">
             <ProfileMenuItem icon={Settings} label="App Settings" href="/settings" />
             <ProfileMenuItem icon={Globe} label="Privacy Settings" href="/settings/privacy" />
             <ProfileMenuItem icon={Bell} label="Notifications" href="/settings/notifications" />
@@ -177,16 +179,16 @@ export default function ProfilePage() {
         </section>
 
         <div className="pt-4 px-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={handleSignOut}
-            className="w-full h-14 rounded-[2rem] bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border border-destructive/10"
+            className="w-full h-14 rounded- bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border-destructive/10"
           >
             <LogOut size={20} />
             Sign Out
           </Button>
           <p className="text-center text-[9px] text-muted-foreground mt-6 font-bold uppercase tracking-[0.3em] opacity-40">
-            Zynqo • Member since {formatJoinedDate(profile.createdAt)}
+            Zynqo • Member since {formatJoinedDate(user.metadata.creationTime)}
           </p>
         </div>
       </div>
