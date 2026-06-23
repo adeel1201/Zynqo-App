@@ -27,7 +27,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useFirebaseAuth();
+  const { user, auth, loading: authLoading } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -54,7 +54,7 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
-      await signOut(user.auth);
+      await signOut(auth); // ← FIX: user.auth ki jagah sirf auth
       router.push('/welcome');
     } catch (error) {
       console.error("Sign out error", error);
@@ -101,7 +101,7 @@ export default function ProfilePage() {
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-headline font-bold truncate text-foreground">{displayName}</h2>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">@{username}</p>
-          <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 text- font-black uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
+          <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 text-xs font-black uppercase tracking-widest text-primary hover:opacity-80 transition-opacity">
             <Edit3 size={12} />
             Edit Profile
           </Link>
@@ -115,10 +115,10 @@ export default function ProfilePage() {
         {/* Content Creator Section */}
         <section className="space-y-3">
           <div className="flex items-center justify-between ml-2">
-            <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Content Creator</h4>
             <span className="text-[9px] font-black text-primary/40">{myChannels.length}/3 Channels</span>
           </div>
-          <div className="bg-white rounded- border-border overflow-hidden shadow-sm">
+          <div className="bg-white rounded-xl border-border overflow-hidden shadow-sm">
             {channelsLoading? (
               <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-primary/30" size={20} /></div>
             ) : myChannels.length > 0? (
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-foreground">Create Video Channel</p>
-                    <p className="text- text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mt-0.5">Share your voice with the world</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground/30" />
@@ -169,8 +169,8 @@ export default function ProfilePage() {
 
         {/* Regular Settings */}
         <section className="space-y-3">
-          <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
-          <div className="bg-white rounded- border-border overflow-hidden shadow-sm">
+          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Preferences</h4>
+          <div className="bg-white rounded-xl border-border overflow-hidden shadow-sm">
             <ProfileMenuItem icon={Settings} label="App Settings" href="/settings" />
             <ProfileMenuItem icon={Globe} label="Privacy Settings" href="/settings/privacy" />
             <ProfileMenuItem icon={Bell} label="Notifications" href="/settings/notifications" />
@@ -182,7 +182,7 @@ export default function ProfilePage() {
           <Button
             variant="ghost"
             onClick={handleSignOut}
-            className="w-full h-14 rounded- bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border-destructive/10"
+            className="w-full h-14 rounded-xl bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2 font-bold border-destructive/10"
           >
             <LogOut size={20} />
             Sign Out
