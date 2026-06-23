@@ -7,13 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Radio, Users, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useFirebaseAuth } from '@/hooks/use-firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 
 export default function ChannelsPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const user = (auth as any)?.user ?? null;
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,7 +29,7 @@ export default function ChannelsPage() {
   const { data: channels = [], loading } = useCollection(channelsQuery);
 
   const filteredChannels = useMemo(() => {
-    return channels.filter((c: any) => 
+    return channels.filter((c: any) =>
       c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -49,8 +48,8 @@ export default function ChannelsPage() {
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input 
-            placeholder="Search channels..." 
+          <Input
+            placeholder="Search channels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-12 pl-12 bg-muted border-border rounded-2xl focus-visible:ring-primary text-sm text-foreground"
@@ -58,7 +57,7 @@ export default function ChannelsPage() {
         </div>
 
         {/* My Subscriptions */}
-        {followedChannels.length > 0 && !searchQuery && (
+        {followedChannels.length > 0 &&!searchQuery && (
           <div className="space-y-3">
             <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Following</h4>
             <div className="flex flex-col gap-2">
@@ -76,19 +75,19 @@ export default function ChannelsPage() {
             <Sparkles size={14} className="text-primary animate-pulse" />
           </div>
 
-          {loading ? (
+          {loading? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="animate-spin text-primary" size={24} />
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Loading Directory...</p>
             </div>
-          ) : filteredChannels.length > 0 ? (
+          ) : filteredChannels.length > 0? (
             <div className="flex flex-col gap-2">
               {filteredChannels.map((channel: any) => (
                 <ChannelCard key={channel.id} channel={channel} onClick={() => router.push(`/channels/${channel.id}`)} />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-[2.5rem] border border-dashed border-border">
+            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-[2.5rem] border-dashed border-border">
               <Radio className="text-muted-foreground opacity-20 mb-4" size={32} />
               <p className="text-xs text-muted-foreground font-medium">No channels found.</p>
             </div>
@@ -97,7 +96,7 @@ export default function ChannelsPage() {
       </div>
 
       {/* Create FAB */}
-      <Button 
+      <Button
         onClick={() => router.push('/channels/create')}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/30 z-30 transition-transform active:scale-90"
         size="icon"
@@ -110,11 +109,11 @@ export default function ChannelsPage() {
 
 function ChannelCard({ channel, onClick }: { channel: any; onClick: () => void }) {
   return (
-    <div 
+    <div
       onClick={onClick}
-      className="flex items-center gap-4 bg-card p-4 rounded-2xl border border-border hover:bg-muted/30 transition-all cursor-pointer group shadow-sm"
+      className="flex items-center gap-4 bg-card p-4 rounded-2xl border-border hover:bg-muted/30 transition-all cursor-pointer group shadow-sm"
     >
-      <Avatar className="w-12 h-12 border border-border rounded-xl">
+      <Avatar className="w-12 h-12 border-border rounded-xl">
         <AvatarImage src={channel.photo} />
         <AvatarFallback className="bg-primary/10 text-primary">
           <Radio size={20} />
