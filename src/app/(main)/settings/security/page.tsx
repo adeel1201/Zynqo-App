@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebaseAuth, useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
-import { sendEmailVerification } from 'firebase/auth';
+import { sendEmailVerification, signOut } from 'firebase/auth';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,11 +23,12 @@ import { cn } from '@/lib/utils';
 
 export default function SecuritySettingsPage() {
   const router = useRouter();
-  const { user, loading } = useFirebaseAuth();
+  const { user, auth, loading } = useFirebaseAuth();
   const db = useFirestore();
   const { toast } = useToast();
 
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Fetch Security Logs
   const logsQuery = useMemoFirebase(() => {
@@ -54,6 +55,20 @@ export default function SecuritySettingsPage() {
     }
   };
 
+  const handleSignOutAll = async () => {
+    if (!auth) return;
+    setIsSigningOut(true);
+    try {
+      await signOut(auth);
+      router.push('/welcome');
+      toast({ title: "Signed out", description: "All sessions ended successfully." });
+    } catch (err: any) {
+      toast({ title: "Sign out failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   const isEmailVerified = user?.emailVerified;
 
   return (
@@ -66,7 +81,7 @@ export default function SecuritySettingsPage() {
       </header>
 
       <div className="p-4 space-y-8">
-        <div className="bg-primary/5 border-primary/20 p-6 rounded- flex-col items-center text-center gap-4 relative overflow-hidden">
+        <div className="bg-primary/5 border-primary/20 p-6 rounded-xl flex-col items-center text-center gap-4 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5">
              <ShieldCheck size={120} />
           </div>
@@ -78,13 +93,13 @@ export default function SecuritySettingsPage() {
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-foreground">Security Score: {isEmailVerified? 'Excellent' : 'Action Required'}</h3>
-            <p className="text- text-muted-foreground uppercase font-black tracking-widest opacity-60">Protect your Zynqo account</p>
+            <p className="text-xs text-muted-foreground uppercase font-black tracking-widest opacity-60">Protect your Zynqo account</p>
           </div>
         </div>
 
         <section className="space-y-3">
-          <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Protection Flow</h4>
-          <div className="bg-card rounded- border-border divide-y divide-border overflow-hidden shadow-sm">
+          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Protection Flow</h4>
+          <div className="bg-card rounded-xl border-border divide-y divide-border overflow-hidden shadow-sm">
 
             <div className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -93,7 +108,7 @@ export default function SecuritySettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground">Email Verification</p>
-                  <p className="text- text-muted-foreground font-medium">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{user?.email}</p>
                 </div>
               </div>
               {isEmailVerified? (
@@ -123,7 +138,7 @@ export default function SecuritySettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground">Two-Factor Authentication</p>
-                  <p className="text- text-muted-foreground font-medium">Add an extra layer of security</p>
+                  <p className="text-xs text-muted-foreground font-medium">Add an extra layer of security</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -142,7 +157,7 @@ export default function SecuritySettingsPage() {
             </div>
           </div>
 
-          <div className="bg-card rounded- border-border overflow-hidden shadow-sm">
+          <div className="bg-card rounded-xl border-border overflow-hidden shadow-sm">
             {logsLoading? (
               <div className="p-10 flex-col items-center justify-center gap-4">
                 <Loader2 className="animate-spin text-primary" size={24} />
@@ -164,7 +179,7 @@ export default function SecuritySettingsPage() {
                         <span className="text-[9px] font-normal text-muted-foreground uppercase tracking-wider">• {log.deviceInfo || 'Unknown Device'}</span>
                       </p>
                       <div className="flex items-center justify-between mt-0.5">
-                         <p className="text- text-muted-foreground font-medium uppercase tracking-widest">
+                         <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
                            {log.timestamp?.toDate? formatDistanceToNow(log.timestamp.toDate(), { addSuffix: true }) : 'Recently'}
                          </p>
                          <p className="text-[9px] text-muted-foreground/40 font-mono">{log.ipAddress || 'IP Hidden'}</p>
@@ -181,7 +196,7 @@ export default function SecuritySettingsPage() {
           </div>
         </section>
 
-        <div className="bg-muted/30 p-6 rounded- border-border flex items-start gap-4">
+        <div className="bg-muted/30 p-6 rounded-xl border-border flex items-start gap-4">
            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-muted-foreground shrink-0 shadow-sm">
               <AlertCircle size={24} />
            </div>
@@ -190,7 +205,13 @@ export default function SecuritySettingsPage() {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 If you notice suspicious activity, you can sign out of all other sessions immediately.
               </p>
-              <Button variant="link" className="text-primary p-0 h-auto text- font-bold uppercase tracking-widest">
+              <Button
+                variant="link"
+                onClick={handleSignOutAll}
+                disabled={isSigningOut || loading}
+                className="text-primary p-0 h-auto text-xs font-bold uppercase tracking-widest"
+              >
+                {isSigningOut? <Loader2 size={12} className="animate-spin mr-1" /> : null}
                 Sign out of all sessions
               </Button>
            </div>
