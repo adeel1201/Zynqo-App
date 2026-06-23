@@ -1,58 +1,133 @@
 "use client";
 
-/**
- * @fileOverview Zynqo Real-time Firebase Hooks
- * Provides a unified, stable, and real-time interface for all Firebase operations.
- */
-
-import { 
-  useFirestore as useBaseFirestore, 
-  useStorage as useBaseStorage, 
-  useFirebaseAuth as useBaseAuth,
-  useCollection as useBaseCollection,
-  useDoc as useBaseDoc,
-  useMemoFirebase
-} from '@/firebase';
-import { DocumentData, Query, DocumentReference } from 'firebase/firestore';
+import { useEffect, useState, useRef } from 'react';
+import { getFirestore, Firestore, collection, query, Query, onSnapshot, DocumentReference, DocumentData, getDoc } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getAuth, Auth, onAuthStateChanged, User } from 'firebase/auth';
 
 /**
- * Returns the Firestore instance.
+ * Returns Firestore instance - Vercel safe
  */
-export function useFirestore() {
-  return useBaseFirestore();
+export function useFirestore(): Firestore {
+  return getFirestore();
 }
 
 /**
- * Returns the Storage instance.
+ * Returns Storage instance
  */
-export function useStorage() {
-  return useBaseStorage();
+export function useStorage(): FirebaseStorage {
+  return getStorage();
 }
 
 /**
- * Returns the Auth instance.
+ * Returns Auth + current user
  */
-export function useFirebaseAuth() {
-  return useBaseAuth();
+export function useFirebaseAuth(): { user: User | null; loading: boolean } {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth: Auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  return { user, loading };
 }
 
 /**
- * Real-time collection hook using onSnapshot.
- * Automatically handles subscriptions and cleanups.
+ * Real-time collection hook using onSnapshot
  */
 export function useCollection<T = DocumentData>(q: Query<T> | null) {
-  return useBaseCollection<T>(q);
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!q) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map(doc => ({ id: doc.id,...doc.data() } as T));
+        setData(docs);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('useCollection error:', err);
+        setError(err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsub();
+  }, [q]);
+
+  return { data, loading, error };
 }
 
 /**
- * Real-time document hook using onSnapshot.
- * Automatically handles subscriptions and cleanups.
+ * Real-time document hook using onSnapshot
  */
 export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
-  return useBaseDoc<T>(ref);
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!ref) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const unsub = onSnapshot(
+      ref,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setData({ id: snapshot.id,...snapshot.data() } as T);
+        } else {
+          setData(null);
+        }
+        setLoading(false);
+      },
+      (err) => {
+        console.error('useDoc error:', err);
+        setError(err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsub();
+  }, [ref]);
+
+  return { data, loading, error };
 }
 
 /**
- * Stabilizes a Firebase query or reference to prevent infinite render loops.
+ * Stabilizes a Firebase query or reference
+ * Vercel safe - null deps ko handle karta hai
  */
-export { useMemoFirebase };
+export function useMemoFirebase<T>(factory: () => T | null, deps: any[]): T | null {
+  const ref = useRef<T | null>(null);
+  const depsRef = useRef<any[]>([]);
+
+  const allDepsValid = deps.every(dep => dep!== null && dep!== undefined);
+  const changed = deps.length!== depsRef.current.length || deps.some((dep, i) => dep!== depsRef.current[i]);
+
+  if (allDepsValid && (changed || ref.current === null)) {
+    ref.current = factory();
+    depsRef.current = deps;
+  }
+
+  return ref.current;
+}
