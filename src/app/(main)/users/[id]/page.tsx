@@ -1,26 +1,25 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useDoc, useMemoFirebase } from '@/hooks/use-firebase';
-import { 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  serverTimestamp, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs 
+import { useFirebaseAuth, useFirestore, useDoc, useMemoFirebase } from '@/hooks/use-firebase';
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
-  UserPlus, 
-  UserMinus, 
-  MessageSquare, 
+import {
+  ChevronLeft,
+  UserPlus,
+  UserMinus,
+  MessageSquare,
   Calendar,
   Loader2,
   Globe,
@@ -33,18 +32,18 @@ import { useToast } from '@/hooks/use-toast';
 export default function UserProfilePage() {
   const params = useParams();
   const id = params?.id as string;
-  const { user, profile: myProfile } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const [isContact, setIsContact] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const userRef = useMemoFirebase(() => (id && db) ? doc(db, 'users', id) : null, [db, id]);
+  const userRef = useMemoFirebase(() => (id && db)? doc(db, 'users', id) : null, [db, id]);
   const { data: targetProfile, loading: profileLoading } = useDoc(userRef);
 
-  const contactRef = useMemoFirebase(() => (user?.uid && id && db) ? doc(db, 'users', user.uid, 'contacts', id) : null, [db, user?.uid, id]);
+  const contactRef = useMemoFirebase(() => (user?.uid && id && db)? doc(db, 'users', user.uid, 'contacts', id) : null, [db, user?.uid, id]);
   const { data: contactData } = useDoc(contactRef);
 
   useEffect(() => {
@@ -52,12 +51,11 @@ export default function UserProfilePage() {
   }, [contactData]);
 
   const toggleContact = async () => {
-    // TypeScript Error Fix: Explicit null checks
-    if (!user?.uid || !db || !id || !targetProfile) return;
-    
+    if (!user?.uid ||!db ||!id ||!targetProfile) return;
+
     setIsActionLoading(true);
     try {
-      const contactDocRef = doc(db!, 'users', user.uid, 'contacts', id);
+      const contactDocRef = doc(db, 'users', user.uid, 'contacts', id);
       if (isContact) {
         await deleteDoc(contactDocRef);
         toast({ title: "Removed from contacts" });
@@ -70,6 +68,7 @@ export default function UserProfilePage() {
         toast({ title: "Added to contacts" });
       }
     } catch (err) {
+      console.error(err);
       toast({ title: "Operation failed", variant: "destructive" });
     } finally {
       setIsActionLoading(false);
@@ -77,21 +76,20 @@ export default function UserProfilePage() {
   };
 
   const startChat = async () => {
-    // TypeScript Error Fix: Explicit null checks
-    if (!user?.uid || !db || !id || !targetProfile) {
+    if (!user?.uid ||!db ||!id ||!targetProfile) {
       toast({ title: "Error", description: "Session or profile not found", variant: "destructive" });
       return;
     }
-    
+
     setIsActionLoading(true);
     try {
-      const chatsRef = collection(db!, 'chats');
+      const chatsRef = collection(db, 'chats');
       const q = query(
         chatsRef,
         where('type', '==', 'one-to-one'),
         where('participantIds', 'array-contains', user.uid)
       );
-      
+
       const querySnapshot = await getDocs(q);
       const existingChat = querySnapshot.docs.find(docSnap => {
         const data = docSnap.data();
@@ -104,7 +102,7 @@ export default function UserProfilePage() {
         const newChat = await addDoc(chatsRef, {
           type: 'one-to-one',
           participantIds: [user.uid, id],
-          participantNames: [user.displayName || myProfile?.displayName || 'User', (targetProfile as any).displayName || 'User'],
+          participantNames: [user.displayName || 'User', (targetProfile as any).displayName || 'User'],
           updatedAt: serverTimestamp(),
           createdAt: serverTimestamp(),
           lastMessage: {
@@ -161,7 +159,7 @@ export default function UserProfilePage() {
             <Avatar className="w-32 h-32 border-4 border-white shadow-xl">
               <AvatarImage src={profileData.profilePhoto} />
               <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
-                {profileData.displayName?.[0]}
+                {profileData.displayName?.[0] || 'U'}
               </AvatarFallback>
             </Avatar>
             {isOnline && <div className="absolute bottom-2 right-2 w-7 h-7 bg-green-500 border-4 border-white rounded-full shadow-lg" />}
@@ -183,23 +181,23 @@ export default function UserProfilePage() {
               <Button onClick={startChat} disabled={isActionLoading} className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-white">
                 <MessageSquare size={18} className="mr-2" /> Message
               </Button>
-              <Button 
+              <Button
                 variant="outline" onClick={toggleContact} disabled={isActionLoading}
-                className={`flex-1 h-12 rounded-2xl border-border bg-white ${isContact ? 'text-destructive hover:bg-destructive/5' : 'text-primary hover:bg-primary/5'}`}
+                className={`flex-1 h-12 rounded-2xl border-border bg-white ${isContact? 'text-destructive hover:bg-destructive/5' : 'text-primary hover:bg-primary/5'}`}
               >
-                {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : (
-                  isContact ? <><UserMinus size={18} className="mr-2" /> Remove</> : <><UserPlus size={18} className="mr-2" /> Add Contact</>
+                {isActionLoading? <Loader2 size={18} className="animate-spin" /> : (
+                  isContact? <><UserMinus size={18} className="mr-2" /> Remove</> : <><UserPlus size={18} className="mr-2" /> Add Contact</>
                 )}
               </Button>
             </>
           )}
-          {isMe && <Button onClick={() => router.push('/profile/edit')} className="w-full h-12 rounded-2xl bg-muted border border-border hover:bg-muted/80 font-bold text-foreground">Edit My Profile</Button>}
+          {isMe && <Button onClick={() => router.push('/profile/edit')} className="w-full h-12 rounded-2xl bg-muted border-border hover:bg-muted/80 font-bold text-foreground">Edit My Profile</Button>}
         </div>
 
-        <div className="bg-card rounded-[2rem] p-6 border border-border space-y-4 shadow-sm">
+        <div className="bg-card rounded-[2rem] p-6 border-border space-y-4 shadow-sm">
           {profileData.bio && (
             <div className="space-y-1">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">About</h4>
+              <h4 className="text- font-bold uppercase tracking-widest text-primary">About</h4>
               <p className="text-sm text-muted-foreground leading-relaxed italic">"{profileData.bio}"</p>
             </div>
           )}
@@ -215,7 +213,7 @@ export default function UserProfilePage() {
               <Calendar size={16} className="text-primary/60" />
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase font-bold opacity-50">Joined</span>
-                <span className="text-xs font-semibold text-foreground">{profileData.createdAt && typeof profileData.createdAt.seconds === 'number' ? new Date(profileData.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
+                <span className="text-xs font-semibold text-foreground">{profileData.createdAt && typeof profileData.createdAt.seconds === 'number'? new Date(profileData.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}</span>
               </div>
             </div>
           </div>
