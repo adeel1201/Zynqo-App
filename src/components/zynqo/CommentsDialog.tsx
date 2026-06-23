@@ -2,35 +2,27 @@
 "use client";
 
 import { useState } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send, Trash2 } from 'lucide-react';
-import { 
-  useFirestore, 
-  useCollection, 
-  useMemoFirebase, 
-  useAuth 
-} from '@/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp 
+import { useFirestore, useCollection, useMemoFirebase, useFirebaseAuth } from '@/hooks/use-firebase';
+import {
+  collection,
+  query,
+  orderBy,
+  addDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 interface CommentsDialogProps {
   momentId: string;
@@ -40,14 +32,17 @@ interface CommentsDialogProps {
 
 export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialogProps) {
   const db = useFirestore();
-  const { user, profile } = useAuth();
+  const { user } = useFirebaseAuth();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Profile ke liye simple state - agar context me hai to wahan se lo
+  const [profile] = useState<any>(null);
+
   const commentsQuery = useMemoFirebase(() => {
-    if (!db || !momentId) return null;
+    if (!db ||!momentId) return null;
     return query(
-      collection(db, 'moments', momentId, 'comments'), 
+      collection(db, 'moments', momentId, 'comments'),
       orderBy('createdAt', 'asc')
     );
   }, [db, momentId]);
@@ -56,13 +51,13 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!db || !user || !commentText.trim()) return;
+    if (!db ||!user ||!commentText.trim()) return;
 
     setIsSubmitting(true);
     const commentData = {
       userId: user.uid,
       userName: profile?.displayName || user.displayName || 'Anonymous',
-      userPhoto: profile?.profilePhoto || '',
+      userPhoto: profile?.profilePhoto || user.photoURL || '',
       text: commentText.trim(),
       createdAt: serverTimestamp()
     };
@@ -70,60 +65,49 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
     const commentsRef = collection(db, 'moments', momentId, 'comments');
 
     addDoc(commentsRef, commentData)
-      .catch(async (err) => {
-        if (err.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError({
-            path: commentsRef.path,
-            operation: 'create',
-            requestResourceData: commentData
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        }
+     .catch((err) => {
+        console.error('Add comment error:', err);
+        alert('Comment post nahi hua. Permission check karo.');
       })
-      .finally(() => {
+     .finally(() => {
         setIsSubmitting(false);
         setCommentText('');
       });
   };
 
   const handleDeleteComment = (commentId: string) => {
-    if (!db || !momentId) return;
+    if (!db ||!momentId) return;
     const commentRef = doc(db, 'moments', momentId, 'comments', commentId);
-    
-    deleteDoc(commentRef).catch(async (err) => {
-      if (err.code === 'permission-denied') {
-        const permissionError = new FirestorePermissionError({
-          path: commentRef.path,
-          operation: 'delete'
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      }
+
+    deleteDoc(commentRef).catch((err) => {
+      console.error('Delete comment error:', err);
+      alert('Delete nahi hua. Sirf apna comment delete kar sakte ho.');
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-white/5 text-foreground sm:max-w-[425px] h-[80vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="bg-card border-white/5 text-foreground sm:max-w-[425px] h-[80vh] flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 border-b border-white/5">
           <DialogTitle className="font-headline font-bold">Comments</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-          {loading ? (
+          {loading? (
             <div className="flex flex-col items-center justify-center h-32 gap-2">
               <Loader2 className="animate-spin text-primary" size={20} />
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Loading comments...</p>
             </div>
-          ) : comments.length > 0 ? (
+          ) : comments.length > 0? (
             comments.map((comment: any) => {
               const isMe = comment.userId === user?.uid;
-              const date = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date();
-              
+              const date = comment.createdAt?.toDate? comment.createdAt.toDate() : new Date();
+
               return (
                 <div key={comment.id} className="flex gap-3 group animate-fade-in">
-                  <Avatar className="w-8 h-8 border border-white/5 shrink-0">
+                  <Avatar className="w-8 h-8 border-white/5 shrink-0">
                     <AvatarImage src={comment.userPhoto} />
-                    <AvatarFallback>{comment.userName?.[0]}</AvatarFallback>
+                    <AvatarFallback>{comment.userName?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -137,7 +121,7 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
                     </p>
                   </div>
                   {isMe && (
-                    <button 
+                    <button
                       onClick={() => handleDeleteComment(comment.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-destructive"
                     >
@@ -156,19 +140,20 @@ export function CommentsDialog({ momentId, isOpen, onOpenChange }: CommentsDialo
 
         <form onSubmit={handleAddComment} className="p-6 border-t border-white/5 bg-background/50">
           <div className="relative flex items-center gap-2">
-            <Input 
+            <Input
               placeholder="Write a comment..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               className="h-12 bg-white/5 border-white/10 rounded-2xl focus-visible:ring-primary text-sm pr-12"
+              disabled={!user}
             />
-            <Button 
+            <Button
               type="submit"
               size="icon"
-              disabled={isSubmitting || !commentText.trim()}
+              disabled={isSubmitting ||!commentText.trim() ||!user}
               className="absolute right-1.5 h-9 w-9 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+              {isSubmitting? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
             </Button>
           </div>
         </form>
