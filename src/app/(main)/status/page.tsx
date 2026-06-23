@@ -4,15 +4,14 @@ import { AppHeader } from '@/components/zynqo/AppHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Plus, Settings, Loader2, PlayCircle, Image as ImageIcon, Clock } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebaseAuth, useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
 import { collection, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 export default function StatusPage() {
-  const { user, profile } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const [last24h, setLast24h] = useState<Date | null>(null);
@@ -25,7 +24,7 @@ export default function StatusPage() {
 
   // Load status updates from the last 24 hours
   const statusesQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid || !last24h) return null;
+    if (!db ||!user?.uid ||!last24h) return null;
     return query(
       collection(db, 'statuses'),
       where('createdAt', '>=', Timestamp.fromDate(last24h)),
@@ -38,11 +37,11 @@ export default function StatusPage() {
 
   // Filter statuses into My Status and Recent Updates
   const myStatuses = statuses.filter((s: any) => s.userId === user?.uid);
-  const otherStatuses = statuses.filter((s: any) => s.userId !== user?.uid);
+  const otherStatuses = statuses.filter((s: any) => s.userId!== user?.uid);
 
   const getExpiryText = (createdAt: any) => {
     if (!createdAt) return '';
-    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const date = createdAt.toDate? createdAt.toDate() : new Date(createdAt);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hoursPassed = diff / (1000 * 60 * 60);
@@ -53,17 +52,17 @@ export default function StatusPage() {
   return (
     <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-24">
       <AppHeader title="Status" showSearch={false} />
-      
+
       <div className="flex flex-col gap-6 p-4">
         {/* User Status */}
-        <div 
+        <div
           onClick={() => router.push('/status/create')}
-          className="flex items-center gap-4 bg-white p-4 rounded-[2rem] border border-border cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
+          className="flex items-center gap-4 bg-white p-4 rounded- border-border cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
         >
           <div className="relative">
             <Avatar className="w-16 h-16 border-2 border-dashed border-primary p-1">
-              <AvatarImage src={profile?.profilePhoto || "https://picsum.photos/seed/me/100/100"} />
-              <AvatarFallback>{profile?.displayName?.[0] || 'ME'}</AvatarFallback>
+              <AvatarImage src={user?.profilePhoto || "https://picsum.photos/seed/me/100/100"} />
+              <AvatarFallback>{user?.displayName?.[0] || 'ME'}</AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white shadow-lg">
               <Plus size={16} />
@@ -72,7 +71,7 @@ export default function StatusPage() {
           <div className="flex-1">
             <h3 className="font-headline font-bold text-foreground">My Status</h3>
             <p className="text-xs text-muted-foreground">
-              {myStatuses.length > 0 ? `${myStatuses.length} active updates` : 'Tap to add a new update'}
+              {myStatuses.length > 0? `${myStatuses.length} active updates` : 'Tap to add a new update'}
             </p>
           </div>
           <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -82,44 +81,44 @@ export default function StatusPage() {
 
         {/* Recent Updates */}
         <div className="flex flex-col gap-4">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Recent Updates</h4>
-          
-          {loading ? (
+          <h4 className="text- font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Recent Updates</h4>
+
+          {loading? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="animate-spin text-primary" size={24} />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing Stories...</p>
+              <p className="text- font-bold uppercase tracking-widest text-muted-foreground opacity-50">Syncing Stories...</p>
             </div>
-          ) : otherStatuses.length > 0 ? (
-            <div className="flex flex-col divide-y divide-border bg-white rounded-[2.5rem] border border-border overflow-hidden shadow-sm">
+          ) : otherStatuses.length > 0? (
+            <div className="flex flex-col divide-y divide-border bg-white rounded- border-border overflow-hidden shadow-sm">
               {otherStatuses.map((story: any) => {
                 const hasSeen = story.viewers?.includes(user?.uid);
-                const date = story.createdAt?.toDate ? story.createdAt.toDate() : new Date();
+                const date = story.createdAt?.toDate? story.createdAt.toDate() : new Date();
 
                 return (
-                  <div 
-                    key={story.id} 
+                  <div
+                    key={story.id}
                     onClick={() => router.push(`/status/${story.id}`)}
                     className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                   >
-                    <div className={`p-1 rounded-full border-2 ${hasSeen ? 'border-muted' : 'border-primary shadow-[0_0_10px_rgba(159,95,245,0.1)]'}`}>
+                    <div className={`p-1 rounded-full border-2 ${hasSeen? 'border-muted' : 'border-primary shadow-[0_0_10px_rgba(159,95,245,0.1)]'}`}>
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={story.userPhoto} />
-                        <AvatarFallback>{story.userName?.[0]}</AvatarFallback>
+                        <AvatarFallback>{story.userName?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                     </div>
                     <div className="flex-1">
                       <h5 className="font-semibold text-sm text-foreground">{story.userName}</h5>
                       <div className="flex items-center gap-2 mt-0.5">
                         <div className="flex items-center gap-1">
-                           {story.mediaType === 'video' ? <PlayCircle size={10} className="text-primary" /> : <ImageIcon size={10} className="text-primary" />}
-                           <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+                           {story.mediaType === 'video'? <PlayCircle size={10} className="text-primary" /> : <ImageIcon size={10} className="text-primary" />}
+                           <span className="text- text-muted-foreground font-medium uppercase tracking-widest">
                              {formatDistanceToNow(date, { addSuffix: true })}
                            </span>
                         </div>
                         <span className="text-muted-foreground/20">•</span>
                         <div className="flex items-center gap-1 text-primary/70">
                            <Clock size={10} />
-                           <span className="text-[9px] font-bold uppercase tracking-tighter">
+                           <span className="text- font-bold uppercase tracking-tighter">
                              {getExpiryText(story.createdAt)}
                            </span>
                         </div>
@@ -130,7 +129,7 @@ export default function StatusPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded-[2.5rem] border border-dashed border-border">
+            <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-muted/20 rounded- border-dashed border-border">
               <p className="text-xs text-muted-foreground font-medium">No recent updates from your friends.</p>
             </div>
           )}
