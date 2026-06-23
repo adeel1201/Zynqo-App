@@ -1,8 +1,7 @@
 "use client";
 
 import { AppHeader } from '@/components/zynqo/AppHeader';
-import { useAuth } from '@/context/AuthContext';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirebaseAuth, useFirestore, useCollection, useMemoFirebase } from '@/hooks/use-firebase';
 import { collection, query, deleteDoc, doc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -13,14 +12,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function ContactsPage() {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const db = useFirestore();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Load contacts sub-collection
   const contactsQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db ||!user?.uid) return null;
     return query(collection(db, 'users', user.uid, 'contacts'));
   }, [db, user?.uid]);
 
@@ -28,7 +27,7 @@ export default function ContactsPage() {
 
   // Load all users to get real-time status/details for contacts
   const usersQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db ||!user?.uid) return null;
     return query(collection(db, 'users'));
   }, [db, user?.uid]);
 
@@ -38,16 +37,16 @@ export default function ContactsPage() {
   const contactProfiles = useMemo(() => {
     const userMap = new Map(allUsers.map((u: any) => [u.uid, u]));
     return contacts
-      .map((c: any) => userMap.get(c.id))
-      .filter(Boolean)
-      .filter((u: any) => 
+  .map((c: any) => userMap.get(c.id))
+  .filter(Boolean)
+  .filter((u: any) =>
         u.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.username?.toLowerCase().includes(searchQuery.toLowerCase())
       ) as any[];
   }, [contacts, allUsers, searchQuery]);
 
   const removeContact = async (contactId: string) => {
-    if (!user || !db) return;
+    if (!user ||!db) return;
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'contacts', contactId));
     } catch (err) {
@@ -58,12 +57,12 @@ export default function ContactsPage() {
   return (
     <div className="flex flex-col animate-fade-in bg-background min-h-screen pb-20">
       <AppHeader title="Contacts" showSearch={false} />
-      
+
       <div className="p-4 space-y-4">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input 
-            placeholder="Search contacts..." 
+          <Input
+            placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-12 pl-12 bg-muted border-border rounded-2xl focus-visible:ring-primary text-foreground"
@@ -71,22 +70,22 @@ export default function ContactsPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          {contactsLoading ? (
+          {contactsLoading? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="animate-spin text-primary/50" size={32} />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Loading Contacts...</p>
+              <p className="text- font-bold uppercase tracking-widest text-muted-foreground">Loading Contacts...</p>
             </div>
-          ) : contactProfiles.length > 0 ? (
+          ) : contactProfiles.length > 0? (
             contactProfiles.map((profile) => (
-              <div 
+              <div
                 key={profile.uid}
                 className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted transition-all group"
               >
                 <Link href={`/users/${profile.uid}`} className="flex items-center gap-4 flex-1">
                   <div className="relative">
-                    <Avatar className="h-12 w-12 border border-border shadow-sm">
+                    <Avatar className="h-12 w-12 border-border shadow-sm">
                       <AvatarImage src={profile.profilePhoto} />
-                      <AvatarFallback>{profile.displayName?.[0]}</AvatarFallback>
+                      <AvatarFallback>{profile.displayName?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
                     {profile.onlineStatus === 'online' && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
@@ -94,21 +93,21 @@ export default function ContactsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm truncate text-foreground">{profile.displayName}</h4>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">@{profile.username}</p>
+                    <p className="text- text-muted-foreground uppercase tracking-widest font-bold">@{profile.username}</p>
                   </div>
                 </Link>
                 <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="text-primary rounded-full hover:bg-primary/10"
                     onClick={() => router.push(`/chats`)} // Logic for starting chat
                   >
                     <MessageSquare size={18} />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="text-destructive rounded-full hover:bg-destructive/10"
                     onClick={() => removeContact(profile.uid)}
                   >
@@ -122,11 +121,11 @@ export default function ContactsPage() {
               <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-4">
                 <Users size={32} className="text-muted-foreground opacity-20" />
               </div>
-              <h4 className="font-bold text-lg mb-1 text-foreground">{searchQuery ? 'No results found' : 'No contacts yet'}</h4>
+              <h4 className="font-bold text-lg mb-1 text-foreground">{searchQuery? 'No results found' : 'No contacts yet'}</h4>
               <p className="text-xs text-muted-foreground">Find people to connect with in the Discover tab or search for friends.</p>
-              <Button 
-                onClick={() => router.push('/chats')} 
-                variant="outline" 
+              <Button
+                onClick={() => router.push('/chats')}
+                variant="outline"
                 className="mt-6 rounded-2xl border-primary/20 text-primary"
               >
                 Search Users
